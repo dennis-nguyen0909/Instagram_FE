@@ -20,6 +20,10 @@ export const getDetailUserById = async (id) => {
     const res = await axios.get(`http://localhost:3000/api/user/get-detail/${id}`);
     return res.data;
 }
+export const getAllUser = async () => {
+    const res = await axios.get(`http://localhost:3000/api/user/get-all-user`);
+    return res.data;
+}
 export const updateBirthday = async (birthday, id) => {
     const res = await axios.put(`http://localhost:3000/api/user/update-birthday`, { birthday, id });
     return res.data;
@@ -45,3 +49,27 @@ export const refreshToken = async (refresh_token) => {
     return res.data;
 
 }
+export const handleFollow = async (userId, currentUserId) => {
+    console.log(userId, currentUserId)
+    const res = await axios.put(`http://localhost:3000/api/user/follow/${userId}`, { currentUserId });
+    return res.data;
+}
+export const handleUnFollow = async (userId, currentUserId) => {
+
+    const res = await axios.put(`http://localhost:3000/api/user/unfollow/${userId}`, { currentUserId });
+    return res.data;
+}
+export const getFriends = async (userId) => {
+
+    const res = await axios.get(`http://localhost:3000/api/user/friends/${userId}`);
+    return res.data;
+}
+
+export const getUserByUsername = async (username) => {
+
+    const res = await axios.get(`http://localhost:3000/api/user/get-user/?username=${username}`);
+    return res.data;
+}
+
+
+

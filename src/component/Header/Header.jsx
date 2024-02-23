@@ -94,7 +94,7 @@ export const Header = () => {
     }
     const handleCreatePost = async () => {
         const res = await PostService.createPost({ id: user?.id, desc: descPost, images: post })
-        console.log(res)
+
     }
     const handleSelectedPic = () => {
         if (postRef.current && postRef) {
@@ -228,7 +228,11 @@ export const Header = () => {
 
                 </div>
             </Drawer>
-            <Modal title="Tạo bài viết" width={800} open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
+            <Modal
+                footer={null}
+                title="Tạo bài viết"
+                width={800} open={isModalOpen}
+                onOk={handleOk} onCancel={handleCancel}>
                 <div style={{ display: 'flex', gap: '20px', maxHeight: '500px' }}>
                     <div style={{ height: '500px', width: '500px' }} >
                         <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column', gap: '10px' }}>

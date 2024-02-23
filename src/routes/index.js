@@ -3,6 +3,7 @@ import { AdminPage } from "../pages/AdminPage/AdminPage";
 import { HomePage } from "../pages/HomePage/HomePage";
 import { LoginPage } from "../pages/LoginPage/LoginPage";
 import { ProfilePage } from "../pages/ProfilePage/ProfilePage";
+import { ProfileUserOther } from "../pages/ProfileUserOther/ProfilePage";
 import { SignUpPage } from "../pages/SignUpPage/SignUpPage";
 
 
@@ -15,6 +16,11 @@ export const routes = [
     {
         path: '/profile/:id',
         page: ProfilePage,
+        isShowHeader: true,
+    },
+    {
+        path: '/:username',
+        page: ProfileUserOther,
         isShowHeader: true,
     },
     {

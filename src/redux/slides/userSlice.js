@@ -25,12 +25,15 @@ export const userSlide = createSlice({
     initialState,
     reducers: {
         updateUser: (state, action) => {
+
             const { userName = '', email = '', access_token = '', phone = '',
                 address = '', avatar = '', _id = '', isAdmin, city = '',
                 districts = '', ward = '', refresh_token = '',
                 posts = [], followers = [], followings = []
                 , coverPicture = '',
                 desc = '', } = action.payload
+
+
             state.id = _id;
             state.userName = userName;
             state.email = email;
@@ -49,6 +52,36 @@ export const userSlide = createSlice({
             state.followings = followings;
             state.coverPicture = coverPicture;
             // return { ...state, ...action.payload }
+        },
+        updateUserFollow: (state, action) => {
+
+            const { user, access_token } = action.payload;
+            const {
+                userName = '', email = '', phone = '',
+                address = '', avatar = '', _id = '', isAdmin, city = '',
+                districts = '', ward = '', refresh_token = '',
+                posts = [], followers = [], followings = [],
+                coverPicture = '', desc = ''
+            } = user;
+            console.log(userName)
+            state.id = _id;
+            state.userName = userName;
+            state.email = email;
+            state.phone = phone;
+            state.address = address;
+            state.avatar = avatar;
+            state.access_token = access_token;
+            state.isAdmin = isAdmin;
+            state.city = city;
+            state.districts = districts;
+            state.ward = ward;
+            state.refresh_token = refresh_token;
+            state.posts = posts;
+            state.desc = desc;
+            state.followers = followers;
+            state.followings = followings;
+            state.coverPicture = coverPicture;
+            // return { ...state }
         },
         resetUser: (state, action) => {
             state.id = "";
@@ -73,5 +106,5 @@ export const userSlide = createSlice({
     }
 
 })
-export const { updateUser, resetUser } = userSlide.actions
+export const { updateUser, resetUser, updateUserFollow } = userSlide.actions
 export default userSlide.reducer

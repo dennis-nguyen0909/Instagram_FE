@@ -7,6 +7,7 @@ import Cookies from 'js-cookie'
 import * as PostService from '../../service/PostService'
 import * as UserService from '../../service/UserService'
 import { io } from 'socket.io-client';
+import axios from 'axios'
 
 const socket = io('/', {
     reconnection: true
@@ -17,6 +18,7 @@ export const HomePage = () => {
     const [statePost, setStatePost] = useState([]);
     const [addLikePost, SetAddLikePost] = useState([])
     const [removeLikePost, setRemoveLikePost] = useState([])
+    const [onlineUsers, setOnlineUsers] = useState([])
     useEffect(() => {
         if (user?.access_token) {
             navigate('/')
@@ -47,26 +49,28 @@ export const HomePage = () => {
 
     useEffect(() => {
         socket.on('like', (post) => {
-            console.log(post)
             SetAddLikePost(post)
             setRemoveLikePost('')
         })
         socket.on('unlike', (post) => {
-            console.log(post)
-
             SetAddLikePost('')
             setRemoveLikePost(post)
         })
+        socket.emit('addNewUser', user?.id);
+        socket.on('onlineUsers', (res) => {
+            setOnlineUsers(res)
 
+        })
     }, [])
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ marginBottom: '30px' }}>
-                <Story />
+                <Story onlineUsers={onlineUsers} />
             </div>
             <div>
                 {uiPost?.map((post, index) => {
+
                     return (
                         <Post
                             key={index}
@@ -75,11 +79,14 @@ export const HomePage = () => {
                             likes={post?.likes.length}
                             likesId={post?.likes}
                             userName={post?.user?.userName || post?.user?.name}
+
                             avatar={post?.user?.avatar}
                             userId={post?.user?._id}
                             postId={post?._id}
                             postUpdated={post.updatedAt}
                             postCreated={post.createdAt}
+                            commentPost={post.comments}
+
                         />
                     );
                 })}

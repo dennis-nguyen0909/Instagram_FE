@@ -9,10 +9,10 @@ export const Default = ({ children }) => {
                 <Col style={{ borderRight: '1px solid #ccc' }} span={4}>
                     <Header />
                 </Col>
-                <Col span={20}>{children}</Col>
-                {/* <Col span={6}>
+                <Col span={14}>{children}</Col>
+                <Col span={6}>
                     <Navbar />
-                </Col> */}
+                </Col>
             </Row>
         </div>
     )

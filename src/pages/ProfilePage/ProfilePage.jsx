@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
 import * as UserService from '../../service/UserService'
@@ -11,26 +11,52 @@ import { useRef } from 'react'
 import axios from 'axios'
 import { useMutationHook } from '../../hook/useMutationHook'
 import { WrapperAvatar } from './style'
+import { useLocale } from 'antd/es/locale'
 export const ProfilePage = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const params = useParams()
-
+    console.log(params.id)
     const [open, setOpen] = useState(false);
     const [avatar, setAvatar] = useState('')
-
+    const { state } = useLocation()
+    console.log("location", state)
     const user = useSelector((state) => state.user)
+    const [userDetail, setUserDetail] = useState({
+        id: "",
+        userName: '',
+        email: '',
+        isAdmin: false,
+        phone: '',
+        followers: [],
+        followings: [],
+        avatar: '',
+        coverPicture: '',
+        desc: '',
+        address: '',
+        city: '',
+        districts: '',
+        ward: '',
+        access_token: '',
+        refresh_token: '',
+        posts: [],
+    })
     const [userName, setUserName] = useState('')
     const [sex, setSex] = useState('')
     const [desc, setDesc] = useState('')
     const query = useQueryClient()
     const getDetailUser = async () => {
-        const res = await UserService.getDetailUserById(params.id);
-        return res.response.data
+        const res = await UserService.getDetailUserById(params.id || state.userId);
+        setUserDetail({ ...res.response.data })
+        // return res.response.data
     }
 
-    const { data } = useQuery({ queryKey: ['user-detail'], queryFn: getDetailUser })
-    const userDetail = data
+    useEffect(() => {
+        getDetailUser();
+    }, [params.id, userDetail?.avatar])
+    // console.log(userDetail)
+    // const { data } = useQuery({ queryKey: ['user-detail'], queryFn: getDetailUser })
+    // const userDetail = data
     const fileInputRef = useRef(null)
     useEffect(() => {
         setAvatar(user?.avatar)
@@ -83,7 +109,8 @@ export const ProfilePage = () => {
             axios.post('https://api.cloudinary.com/v1_1/dxtz2g7ga/image/upload', formData)
                 .then((data) => {
 
-                    setAvatar(data?.data.url.toString() + "");
+                    mutation.mutate({ id: user?.id, avatar: data?.data.url.toString() })
+                    setAvatar(userDetail?.avatar);
                 })
                 .catch((err) => {
                     console.error('Cloudinary error', err);
