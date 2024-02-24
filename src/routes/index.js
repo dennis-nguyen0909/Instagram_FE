@@ -1,5 +1,6 @@
 import { NotFound } from "../component/NotFound/NotFound";
 import { AdminPage } from "../pages/AdminPage/AdminPage";
+import ChatPage from "../pages/ChatPage/ChatPage";
 import { HomePage } from "../pages/HomePage/HomePage";
 import { LoginPage } from "../pages/LoginPage/LoginPage";
 import { ProfilePage } from "../pages/ProfilePage/ProfilePage";
@@ -31,6 +32,11 @@ export const routes = [
     {
         path: '/sign-up',
         page: SignUpPage,
+        isShowHeader: false,
+    },
+    {
+        path: '/direct/inbox/:id',
+        page: ChatPage,
         isShowHeader: false,
     },
     {

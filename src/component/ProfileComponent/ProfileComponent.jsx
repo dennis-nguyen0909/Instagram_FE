@@ -18,6 +18,7 @@ export const ProfileComponent = ({ username }) => {
     const getUserByUserName = async () => {
         try {
             const res = await UserService.getUserByUsername(username);
+            console.log(res)
             return res.response.data;
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -74,10 +75,14 @@ export const ProfileComponent = ({ username }) => {
 
 
     }
-    console.log(userDetail)
+    console.log("userDetail", userDetail)
+    const navigate = useNavigate()
     useEffect(() => {
         handleGetPostByUser();
     }, [])
+    const handleNavigateChat = async (id) => {
+        navigate(`/direct/inbox/${id}`)
+    }
     return (
         <div style={{ borderBottom: '1px solid #ccc', margin: '0 100px' }}>
             <div style={{ height: '230px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -112,7 +117,7 @@ export const ProfileComponent = ({ username }) => {
                                 }} >Theo dõi</Button>)}
 
                             <Button
-
+                                onClick={() => handleNavigateChat(userDetail._id)}
                                 style={{
                                     color: 'black',
                                     fontWeight: 'bold',

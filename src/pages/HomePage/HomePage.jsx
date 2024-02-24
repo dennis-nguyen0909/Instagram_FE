@@ -8,6 +8,7 @@ import * as PostService from '../../service/PostService'
 import * as UserService from '../../service/UserService'
 import { io } from 'socket.io-client';
 import axios from 'axios'
+import LoadingComponent from '../../component/LoadingComponent/LoadingComponent'
 
 const socket = io('/', {
     reconnection: true
@@ -19,6 +20,7 @@ export const HomePage = () => {
     const [addLikePost, SetAddLikePost] = useState([])
     const [removeLikePost, setRemoveLikePost] = useState([])
     const [onlineUsers, setOnlineUsers] = useState([])
+    const [loading, setLoading] = useState(false)
     useEffect(() => {
         if (user?.access_token) {
             navigate('/')
@@ -36,12 +38,14 @@ export const HomePage = () => {
     }
     const getAllPost = async () => {
         try {
+            setLoading(true)
             const res = await PostService.getAllPost();
             setStatePost(res?.response.posts)
         } catch (error) {
             // Xử lý lỗi nếu có
             console.error("Error fetching posts:", error);
         }
+        setLoading(false)
     };
     useEffect(() => {
         getAllPost();
@@ -69,27 +73,27 @@ export const HomePage = () => {
                 <Story onlineUsers={onlineUsers} />
             </div>
             <div>
-                {uiPost?.map((post, index) => {
-
-                    return (
-                        <Post
-                            key={index}
-                            desc={post?.desc}
-                            images={post?.images}
-                            likes={post?.likes.length}
-                            likesId={post?.likes}
-                            userName={post?.user?.userName || post?.user?.name}
-
-                            avatar={post?.user?.avatar}
-                            userId={post?.user?._id}
-                            postId={post?._id}
-                            postUpdated={post.updatedAt}
-                            postCreated={post.createdAt}
-                            commentPost={post.comments}
-
-                        />
-                    );
-                })}
+                <LoadingComponent isLoading={loading}>
+                    {uiPost?.map((post, index) => {
+                        return (
+                            <Post
+                                loading={loading}
+                                key={index}
+                                desc={post?.desc}
+                                images={post?.images}
+                                likes={post?.likes.length}
+                                likesId={post?.likes}
+                                userName={post?.user?.userName || post?.user?.name}
+                                avatar={post?.user?.avatar}
+                                userId={post?.user?._id}
+                                postId={post?._id}
+                                postUpdated={post.updatedAt}
+                                postCreated={post.createdAt}
+                                commentPost={post.comments}
+                            />
+                        );
+                    })}
+                </LoadingComponent>
 
             </div>
         </div>

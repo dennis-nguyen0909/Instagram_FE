@@ -3,11 +3,13 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
 import * as UserService from '../../service/UserService'
-import { Avatar, Button, Drawer, Image, Input, Select, message } from 'antd'
+import * as PostService from '../../service/PostService'
+import { Avatar, Badge, Button, Card, Drawer, Image, Input, Select, message } from 'antd'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import avatarDefault from '../../assets/images/avatar.jpeg'
 import { updateUser, resetUser } from '../../redux/slides/userSlice'
 import { useRef } from 'react'
+import { HeartOutlined } from '@ant-design/icons';
 import axios from 'axios'
 import { useMutationHook } from '../../hook/useMutationHook'
 import { WrapperAvatar } from './style'
@@ -162,7 +164,17 @@ export const ProfilePage = () => {
     const HandleUpdate = async () => {
         await updateUserMutation.mutate({ id: user?.id, sex, desc, userName })
     }
+    console.log()
+    const handleGetPost = async (userId) => {
 
+        const id = userId.queryKey[1]
+        const res = await PostService.getPostByUser(id);
+        return res.response.data
+    }
+
+    const { data: posts } = useQuery({ queryKey: ['posts', userDetail._id], queryFn: handleGetPost }); // Không gọi handleGetPost ngay lập tức, chỉ truyền tham chiếu của nó vào queryFn
+
+    console.log(posts)
 
     return (
         <>
@@ -226,6 +238,41 @@ export const ProfilePage = () => {
                     </div>
                 </div>
             </div>
+            <div style={{ marginTop: '20px', marginLeft: '120px' }}>
+                {posts?.map((post) => (
+                    <div key={post.id} style={{ position: 'relative', display: 'inline-block' }}>
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                opacity: 0,
+                                transition: 'opacity 0.3s ease',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <HeartOutlined style={{ fontSize: '32px', color: '#fff' }} />
+                        </div>
+                        <Image
+                            src={post.images}
+                            width={300}
+                            height={300}
+                            style={{ padding: '0 3px', transition: 'filter 0.3s ease' }}
+                            preview={{
+                                mask: <div style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} />,
+                                maskClassName: 'custom-mask',
+                            }}
+                            className="custom-image"
+                        />
+                    </div>
+                ))}
+            </div>
+
             <Drawer width={'50%'} title="Chỉnh sửa thông tin cá nhân" onClose={onClose} open={open}>
                 <div>
                     <p style={{ fontWeight: 'bold' }}> Tên người dùng:{userDetail?.userName}</p>

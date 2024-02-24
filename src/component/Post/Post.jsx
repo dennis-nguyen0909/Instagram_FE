@@ -20,6 +20,7 @@ import { CommentList } from '../CommentList/CommentList';
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { useNavigate } from 'react-router-dom';
+import LoadingComponent from '../LoadingComponent/LoadingComponent';
 const host = 'http://localhost:3000';
 const socket = io('/', {
     reconnection: true,
@@ -35,7 +36,7 @@ const socket = io('/', {
 export const Post = (props) => {
     const { images, desc, likes, userName,
         avatar, userId, postId,
-        postUpdated, postCreated, likesId, commentPost } = props
+        postUpdated, postCreated, likesId, commentPost, loading } = props
     // Config dateTime
     register('vi', vi);
     const formattedTime = format(postCreated, 'vi');
@@ -52,6 +53,7 @@ export const Post = (props) => {
     const [commentRealTime, setCommentRealTime] = useState(commentPost)
     const focusComment = useRef();
     const [displayEmoji, setDisplayEmoji] = useState(false)
+    const [loadingComment, setLoadingComment] = useState(false)
     const navigate = useNavigate()
     const openModal = () => {
         setIsOpen(true);
@@ -270,6 +272,7 @@ export const Post = (props) => {
                     </WrapperInput>
                 </div>
             </div >
+
             <Modal
 
                 style={{ padding: 0, border: '0' }}
@@ -296,7 +299,6 @@ export const Post = (props) => {
                                 <div style={{ padding: '0 10px' }}>
                                     <WrapperComment onWheel={(e) => handleScroll(Math.sign(e.deltaY))} ref={commentRef} >
                                         {/* <ScrollContent scrollPosition={scrollPosition}> */}
-
                                         <WrapperAccount>
                                             <Avatar src={avatar} size={'large'} />
                                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -313,7 +315,6 @@ export const Post = (props) => {
                                             </div>
                                         </WrapperAccount>
                                         <CommentList comments={uiComments} />
-
                                     </WrapperComment>
                                 </div>
                             </div>
