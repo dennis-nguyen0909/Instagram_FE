@@ -17,11 +17,12 @@ export const ProfileUserOther = () => {
     const [isFollow, setIsFollow] = useState(false)
     const user = useSelector((state) => state.user)
     const getUserByUserName = async () => {
-        const res = await UserService.getUserByUsername(params.username);
+        const res = await UserService.getDetailUserById(params.id);
         return res.response.data
     }
     const query = useQueryClient();
     const { data: userDetail } = useQuery({ queryKey: ['user'], queryFn: getUserByUserName })
+    console.log("userDetail", userDetail)
     const handleFollow = async () => {
         const res = await UserService.handleFollow(userDetail._id, user?.id)
         if (res.response.code === 200) {
@@ -54,7 +55,7 @@ export const ProfileUserOther = () => {
 
     return (
         <>
-            <ProfileComponent username={params.username} />
+            <ProfileComponent idUser={params.id} />
         </>
     )
 }

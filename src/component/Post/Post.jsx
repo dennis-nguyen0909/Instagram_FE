@@ -20,17 +20,7 @@ import { CommentList } from '../CommentList/CommentList';
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { useNavigate } from 'react-router-dom';
-import LoadingComponent from '../LoadingComponent/LoadingComponent';
-const host = 'http://localhost:3000';
-const socket = io('/', {
-    reconnection: true,
-    auth: {
-        serverOffset: 0
-    },
-    ackTimeout: 10000,
-    retries: 3,
-})
-// const socket = io()
+import socket from '../../socket/socket';
 
 
 export const Post = (props) => {
@@ -160,7 +150,7 @@ export const Post = (props) => {
         if (res.response.EC === 0) {
             message.success('Xóa thành công')
         } else {
-            message.error(res.reponse.EM)
+            message.error(res.response.EM)
         }
     }
     const content = () => {
@@ -207,11 +197,17 @@ export const Post = (props) => {
     }
 
     const navigateProfileUser = (username) => {
-        console.log('click', username)
+
         setTimeout(() => {
             navigate(`/${username}`)
         }, 2000)
     }
+    const scrollRef = useRef();
+    useEffect(() => {
+        if (scrollRef && scrollRef.current) {
+            scrollRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [comments])
     return (
         <>
             <div style={{ width: '468px', height: '700px', borderBottom: '1px solid #ccc' }} >
@@ -296,7 +292,7 @@ export const Post = (props) => {
                                 </div>
                             </WrapperModalRight>
                             <div>
-                                <div style={{ padding: '0 10px' }}>
+                                <div style={{ padding: '0 10px' }} >
                                     <WrapperComment onWheel={(e) => handleScroll(Math.sign(e.deltaY))} ref={commentRef} >
                                         {/* <ScrollContent scrollPosition={scrollPosition}> */}
                                         <WrapperAccount>
@@ -314,7 +310,9 @@ export const Post = (props) => {
 
                                             </div>
                                         </WrapperAccount>
-                                        <CommentList comments={uiComments} />
+                                        <div ref={scrollRef}>
+                                            <CommentList comments={uiComments} />
+                                        </div>
                                     </WrapperComment>
                                 </div>
                             </div>

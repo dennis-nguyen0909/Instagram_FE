@@ -20,7 +20,7 @@ export const routes = [
         isShowHeader: true,
     },
     {
-        path: '/:username',
+        path: '/:id',
         page: ProfileUserOther,
         isShowHeader: true,
     },
@@ -36,6 +36,11 @@ export const routes = [
     },
     {
         path: '/direct/inbox/:id',
+        page: ChatPage,
+        isShowHeader: false,
+    },
+    {
+        path: '/direct/inbox',
         page: ChatPage,
         isShowHeader: false,
     },

@@ -5,7 +5,7 @@ import { Navbar } from '../../component/Navbar/Navbar';
 import { useParams } from 'react-router-dom';
 export const Default = ({ children }) => {
     const params = useParams()
-    console.log(params)
+
     return (
         <div >
             <Row>

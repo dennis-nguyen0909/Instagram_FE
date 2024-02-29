@@ -50,7 +50,7 @@ export const refreshToken = async (refresh_token) => {
 
 }
 export const handleFollow = async (userId, currentUserId) => {
-    console.log(userId, currentUserId)
+
     const res = await axios.put(`http://localhost:3000/api/user/follow/${userId}`, { currentUserId });
     return res.data;
 }
@@ -61,7 +61,7 @@ export const handleUnFollow = async (userId, currentUserId) => {
 }
 export const getFriends = async (userId) => {
 
-    const res = await axios.get(`http://localhost:3000/api/user/friends/${userId}`);
+    const res = await axios.get(`http://localhost:3000/api/user/get-noFriends/${userId}`);
     return res.data;
 }
 

@@ -4,13 +4,13 @@ export const WrapperContainer = styled.div`
     display:flex;
     align-items:center;
     justify-content:center;
-    background-color:#f9f9f9;
+    // background-color:#f9f9f9;
     margin-top:20px;
     .horizontal-scroll{
-        width:600px;
+        width:630px;
         height:80px;
         background-color:#fff;
-        border:1px solid #ccc;
+        // border:1px solid #ccc;
         border-radius:5px;
         display:flex;
         flex-direction:row;

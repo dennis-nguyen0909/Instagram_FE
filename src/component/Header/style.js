@@ -11,13 +11,14 @@ export const WrapperContainer = styled.div`
 
 `
 export const NavDiv = styled.div`
-    margin-bottom:250px;
+    margin-bottom:200px;
+
     div{
         width:200px;
         padding-left:10px;
         display: flex;
         gap: 10px;
-        font-size: 15px;
+        font-size: 18px;
     }
     div:hover{
         cursor:pointer;

@@ -8,17 +8,21 @@ import { Avatar, Button, Drawer, Image, Input, Select, message } from 'antd'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import avatarDefault from '../../assets/images/avatar.jpeg'
 import * as PostService from '../../service/PostService'
+import * as ChatService from '../../service/ChatService'
 import { WrapperAvatar } from '../../pages/ProfilePage/style'
-
-export const ProfileComponent = ({ username }) => {
+import socket from '../../socket/socket'
+export const ProfileComponent = ({ idUser }) => {
     const [userDetail, setUserDetail] = useState(null);
+    console.log(idUser)
     const [isFollow, setIsFollow] = useState(false)
+    const [followRealTime, setFollowRealTime] = useState([])
+    const [unFollowRealTime, setUnFollowRealTime] = useState([])
     const user = useSelector((state) => state.user)
     const query = useQueryClient();
     const getUserByUserName = async () => {
         try {
-            const res = await UserService.getUserByUsername(username);
-            console.log(res)
+            const res = await UserService.getDetailUserById(idUser);
+
             return res.response.data;
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -32,10 +36,10 @@ export const ProfileComponent = ({ username }) => {
     };
 
     useEffect(() => {
-        if (username) {
+        if (idUser) {
             fetchData();
         }
-    }, [username]);
+    }, [idUser]);
 
 
 
@@ -63,24 +67,34 @@ export const ProfileComponent = ({ username }) => {
         setIsFollow(!isFollow)
     }
     useEffect(() => {
+        socket.on("follow", (data) => {
+            console.log("follow", data)
+        })
+        socket.on("un-follow", (data) => {
+            console.log("un-follow", data)
+        })
+    }, [])
+    useEffect(() => {
         if (userDetail) {
             const checkIdExsit = userDetail?.followers.find((item) => item === user?.id)
             setIsFollow(checkIdExsit !== undefined)
         }
     }, [userDetail]);
     const handleGetPostByUser = async () => {
-        console.log(userDetail?._id)
+
         const res = await PostService.getPostByUser(userDetail?._id);
-        console.log(res);
+
 
 
     }
-    console.log("userDetail", userDetail)
+
     const navigate = useNavigate()
     useEffect(() => {
         handleGetPostByUser();
     }, [])
     const handleNavigateChat = async (id) => {
+        const res = await ChatService.createChat({ senderId: user?.id, receiverId: id })
+
         navigate(`/direct/inbox/${id}`)
     }
     return (

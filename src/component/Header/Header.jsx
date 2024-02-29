@@ -3,36 +3,35 @@ import {
     HomeOutlined, HomeFilled,
     MenuOutlined, SearchOutlined,
     CompassOutlined, VideoCameraOutlined, MessageFilled, CompassFilled,
-    MessageOutlined, HeartOutlined, PlusSquareOutlined, PlusSquareFilled, HeartFilled, VideoCameraFilled
+    MessageOutlined, HeartOutlined, PlusSquareOutlined, PlusSquareFilled, HeartFilled, VideoCameraFilled, PlaySquareOutlined
 } from '@ant-design/icons';
 import axios from 'axios';
 import * as PostService from '../../service/PostService'
-import { Avatar, Button, Col, Drawer, Image, Input, Modal, Row, message } from 'antd';
+import { Avatar, Badge, Button, Col, Drawer, Image, Input, Modal, Row, Space, message } from 'antd';
 import { NavDiv, WrapperContainer } from './style';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import defaultPost from '../../assets/images/default.png'
 import * as UserService from '../../service/UserService'
 import * as NotifyService from '../../service/NotifyService'
-import { useQuery } from '@tanstack/react-query';
-//socket
-import io from 'socket.io-client';
-const host = 'http://localhost:3000';
+import * as ChatService from '../../service/ChatService'
 
-const socket = io('/', {
-    reconnection: true
-})
-
+import socket from '../../socket/socket'
+import { faImage } from '@fortawesome/free-regular-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export const Header = () => {
     const user = useSelector((state) => state.user)
+    const message = useSelector((state) => state.message)
+
     const postRef = useRef(null)
     const [descPost, setDescPost] = useState('')
     const [open, setOpen] = useState(false);
     const [open2, setOpen2] = useState(false);
     const [post, setPost] = useState()
-    const socketRef = useRef()
+    const [roomChats, setRoomChats] = useState([])
     const [notify, setNotify] = useState('')
+    const [messageRealTime, setMessageRealTime] = useState(0)
     const showDrawer = () => {
         setOpen(true);
     };
@@ -59,41 +58,42 @@ export const Header = () => {
         const res = await NotifyService.createNotify(data);
 
     }
-    const handleGetAllNotifyById = async () => {
-        const res = await NotifyService.getAllNotifyById(user?.id);
-        return res.response
-    }
-    const { data: notifyMessage } = useQuery({
-        queryKey: ['notify'], queryFn: handleGetAllNotifyById
-    })
+    useEffect(() => {
+        socket.on('new-message', newMessage => {
+            setMessageRealTime((prev) => prev + 1)
+        })
+    }, [])
 
-
-    const handleItemClick = async (itemName) => {
-        setActiveItem(itemName)
-        // console.log(itemName)
-        switch (itemName) {
-            case 'AVT':
-                navigate(`/profile/${String(user.id)}`)
-                break;
-            case 'search':
-                setOpen(true)
-                break;
-            case 'home':
-                navigate('/')
-                break;
-            case 'create':
-                showModal()
-                break;
-            case 'notify':
-                setOpen2(true)
-                break;
-            default:
-                break;
-
+    const handleItemClick = (itemName) => {
+        setActiveItem(itemName);
+    };
+    useEffect(() => {
+        if (activeItem === 'AVT') {
+            navigate(`/profile/${user.id}`);
+        } else if (activeItem === 'search') {
+            setOpen(true)
+        } else if (activeItem === 'home') {
+            navigate('/')
+        } else if (activeItem === 'create') {
+            showModal()
+        } else if (activeItem === 'notify') {
+            setOpen2(true)
+        } else if (activeItem === 'message') {
+            navigate(`/direct/inbox`)
+        } else {
+            navigate('/')
         }
-    }
+    }, [activeItem]);
     const handleCreatePost = async () => {
         const res = await PostService.createPost({ id: user?.id, desc: descPost, images: post })
+        if (+res.response.EC === 0) {
+            message.success("Create post is success!!")
+            setIsModalOpen(false);
+
+        } else {
+            message.error("Có lỗi");
+            setIsModalOpen(true);
+        }
 
     }
     const handleSelectedPic = () => {
@@ -109,38 +109,6 @@ export const Header = () => {
         const res = await UserService.getDetailUserById(userId);
         return res.response.data
     }
-
-
-    // useEffect(() => {
-    //     // Chỉ kết nối socket nếu chưa được kết nối
-    //     if (!socketRef.current) {
-    //         socketRef.current = io.connect(host);
-
-    //         // Lắng nghe sự kiện từ server để thông báo đã có người like bài viết
-    //         socketRef.current.on('notifyOwnerPostLiked', async ({ userId, postId, userPost }) => {
-    //             try {
-
-    //                 const res = await handleGetDetailUser(userId);
-    //                 // const notifyMessage = `${res.userName} đã like bài viết của ${userPost}`;
-    //                 const notifyMessage = `${res.userName} đã like bài viết của bạn`;
-    //                 setNotify(notifyMessage);
-    //                 await handleCreateNotify({ userId, postId, notify: notifyMessage, avatar: res.avatar, userPost });
-    //                 message.success(notifyMessage)
-    //             } catch (error) {
-    //                 console.error('Error:', error);
-    //             }
-    //         });
-    //     }
-
-    //     // Clear kết nối khi component unmount
-    //     return () => {
-    //         if (socketRef.current) {
-    //             socketRef.current.disconnect(); // Ngắt kết nối socket
-    //             socketRef.current = null; // Đặt biến ref về null để chỉ ra rằng kết nối đã được ngắt
-    //         }
-    //     };
-    // }, []);
-
 
     const uploadPost = async (pics) => {
         if (pics.type === "image/png" || pics.type === "image/jpeg") {
@@ -167,6 +135,14 @@ export const Header = () => {
     const onChangeDescPost = (e) => {
         setDescPost(e.target.value)
     }
+    const getChat = async () => {
+        const res = await ChatService.getChat(user?.id);
+        setRoomChats(res?.response.data);
+    }
+    useEffect(() => {
+        getChat()
+    }, [])
+
     return (
         <WrapperContainer>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: '30px', paddingLeft: '10px' }}>
@@ -193,9 +169,26 @@ export const Header = () => {
                     <p>Reels </p>
                 </div>
                 <div onClick={() => handleItemClick('message')} className={activeItem === 'message' ? 'active' : ''}>
-                    {activeItem === 'message' ? <MessageFilled /> : <MessageOutlined />}
+                    {activeItem === 'message' ?
+                        (
+                            <Badge>
+                                <MessageFilled />
+                            </Badge>
+                        )
+                        : (
+                            <Badge style={{ fontSize: '10px', display: 'flex' }} count={messageRealTime} size='small'>
+                                < MessageOutlined />
+                                <p>Tin nhắn</p>
+                            </Badge>
 
-                    <p>Tin nhắn</p>
+                        )}
+                    {/* <Space size="large">
+                        <Badge count={99}>
+                            <MessageOutlined shape="square" size="large" />
+                        </Badge>
+                        <p>Tin nhắn</p>
+                    </Space> */}
+
                 </div>
                 <div onClick={() => handleItemClick('notify')} className={activeItem === 'notify' ? 'active' : ''} >
                     {activeItem === 'notify' ? <HeartFilled /> : <HeartOutlined />}
@@ -210,10 +203,8 @@ export const Header = () => {
                     <img src={user?.avatar} style={{ width: '25px', height: '25px', borderRadius: '50%' }}></img>
                     <p style={{ right: '5' }}>Trang cá nhân</p>
                 </div>
-                <div>
-                </div>
             </NavDiv>
-            <div style={{ display: 'flex', gap: '10px', fontSize: '15px', paddingLeft: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', fontSize: '18px', paddingLeft: '10px', marginBottom: '10px' }}>
                 <MenuOutlined />
                 <p>Xem thêm</p>
             </div>
@@ -228,7 +219,7 @@ export const Header = () => {
 
                 </div>
             </Drawer>
-            <Modal
+            {/* <Modal
                 footer={null}
                 title="Tạo bài viết"
                 width={800} open={isModalOpen}
@@ -256,11 +247,22 @@ export const Header = () => {
                     </div>
                     <Button onClick={handleCreatePost}>Create</Button>
                 </div>
-            </Modal>
+            </Modal> */}
 
+            <Modal
+                footer={null}
+                title="Tạo bài viết"
+                width={800} open={isModalOpen}
+                onOk={handleOk} onCancel={handleCancel}>
+                <div style={{ display: 'flex', gap: '20px', maxHeight: '500px' }}>
+                    <PlaySquareOutlined />
+                    <FontAwesomeIcon icon={faImage} />
+
+                </div>
+            </Modal>
             <Drawer style={{ marginLeft: '180px' }} title="Thông báo" placement='left' onClose={onClose2} open={open2}>
                 <h1 style={{ fontSize: '16px' }}>Hôm nay</h1>
-                <div style={{ borderTop: '1px solid #ccc' }}>
+                {/* <div style={{ borderTop: '1px solid #ccc' }}>
                     {notifyMessage?.data.map((notify) => {
 
                         // Kiểm tra xem thông báo có liên quan đến bài viết của người dùng hiện tại không
@@ -273,7 +275,7 @@ export const Header = () => {
                             );
                         }
                     })}
-                </div>
+                </div> */}
             </Drawer>
 
 

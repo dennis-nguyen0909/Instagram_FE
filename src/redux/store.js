@@ -3,17 +3,18 @@ import userReducer from "../redux/slides/userSlice";
 import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage'; // mặc định là localStorage cho web
 import { getDefaultMiddleware } from "@reduxjs/toolkit";
-
+import socketSlice from "./slides/socketSlice";
+import messageSlice from "./slides/messageSlice";
 const persistConfig = {
     key: 'root',
     storage,
-    // blacklist: ['user'] // các thằng kh lưu vào storage
+    blacklist: ['socket'] // các thằng kh lưu vào storage
 };
 
 const rootReducer = combineReducers({
-    // product: productReducer,
+    socket: socketSlice,
     user: userReducer,
-    // order: orderReducer
+    message: messageSlice
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

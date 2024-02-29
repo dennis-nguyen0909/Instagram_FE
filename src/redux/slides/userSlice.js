@@ -63,7 +63,7 @@ export const userSlide = createSlice({
                 posts = [], followers = [], followings = [],
                 coverPicture = '', desc = ''
             } = user;
-            console.log(userName)
+
             state.id = _id;
             state.userName = userName;
             state.email = email;

@@ -29,7 +29,7 @@ export const Story = ({ onlineUsers }) => {
         });
     };
     return (
-        <WrapperContainer>
+        <WrapperContainer style={{ overflowX: 'auto' }}>
 
 
             <div className='horizontal-scroll'>

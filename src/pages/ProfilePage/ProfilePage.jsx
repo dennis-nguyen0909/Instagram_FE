@@ -18,11 +18,10 @@ export const ProfilePage = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const params = useParams()
-    console.log(params.id)
     const [open, setOpen] = useState(false);
     const [avatar, setAvatar] = useState('')
     const { state } = useLocation()
-    console.log("location", state)
+
     const user = useSelector((state) => state.user)
     const [userDetail, setUserDetail] = useState({
         id: "",
@@ -164,22 +163,21 @@ export const ProfilePage = () => {
     const HandleUpdate = async () => {
         await updateUserMutation.mutate({ id: user?.id, sex, desc, userName })
     }
-    console.log()
-    const handleGetPost = async (userId) => {
 
-        const id = userId.queryKey[1]
-        const res = await PostService.getPostByUser(id);
+    const handleGetPost = async () => {
+        const res = await PostService.getPostByUser(params.id);
+        console.log(res)
         return res.response.data
     }
 
-    const { data: posts } = useQuery({ queryKey: ['posts', userDetail._id], queryFn: handleGetPost }); // Không gọi handleGetPost ngay lập tức, chỉ truyền tham chiếu của nó vào queryFn
+    const { data: posts } = useQuery({ queryKey: ['posts'], queryFn: handleGetPost }); // Không gọi handleGetPost ngay lập tức, chỉ truyền tham chiếu của nó vào queryFn
 
-    console.log(posts)
+    console.log(userDetail)
 
     return (
         <>
             <Button onClick={handleLogOut}>Thoat</Button>
-            <div style={{ borderBottom: '1px solid #ccc', margin: '0 150px' }}>
+            <div style={{ borderBottom: '1px solid #ccc', margin: '0 50px' }}>
                 <div style={{ height: '230px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <div style={{ display: 'flex', gap: '90px' }}>
                         <WrapperAvatar >
@@ -190,8 +188,9 @@ export const ProfilePage = () => {
                             ) : <Image className='avt' src={avatarDefault} preview={false} style={{
                                 height: '180px', width: '180px', objectFit: 'cover', borderRadius: '50%'
                             }} />}
-                            <Button className='btn' onClick={handleClickEditAvatar}>Chinh sua</Button>
-                            <Button onClick={HandleUpload}>Save</Button>
+                            {/* <Button className='btn' onClick={handleClickEditAvatar}>Chinh sua</Button> */}
+                            {/* <Button onClick={HandleUpload}>Thay đổi ảnh đại diện</Button> */}
+                            <Button style={{ margin: '10px 0' }} onClick={handleClickEditAvatar}>Thay đổi ảnh đại diện</Button>
                             <input type='file'
                                 accept='image/*'
                                 ref={fileInputRef}

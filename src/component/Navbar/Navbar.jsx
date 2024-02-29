@@ -15,8 +15,8 @@ export const Navbar = () => {
     const navigate = useNavigate();
     const [friends, setFriends] = useState([])
     const handleGetAllUser = async () => {
-        // const res = await UserService.getFriends(currentUser?.id);
-        const res = await UserService.getAllUser();
+        const res = await UserService.getFriends(currentUser?.id);
+        // const res = await UserService.getAllUser();
         setFriends(res.response.data)
     }
     const dispatch = useDispatch()
@@ -43,17 +43,16 @@ export const Navbar = () => {
     }
     const [isNavigating, setIsNavigating] = useState(false);
     const handleNavigateUser = (userId) => {
-        console.log(userId)
+
         setIsNavigating(true);
         navigate(`/profile/${userId}`, { state: { userId } });
 
     }
     return (
         <div style={{ marginTop: '40px', paddingRight: '100px' }}>
-            <Button onClick={() => handleNavigateUser(currentUser?.id)}>AVT</Button>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} >
-                <AvatarComponent image={currentUser?.avatar} name={currentUser?.name} email={currentUser?.email} />
-                <span style={{ color: 'rgb(0,149,246)' }}>Chuyển</span>
+                <AvatarComponent style={{ cursor: 'pointer' }} onClick={() => navigate(`/profile/${currentUser?.id}`)} image={currentUser?.avatar} name={currentUser?.name} email={currentUser?.email} />
+                <span style={{ color: 'rgb(0,149,246)', fontWeight: 'bold' }}>Chuyển</span>
             </div>
             <WrapperDivText>
                 <span style={{ color: 'rgb(115,115,115)', fontWeight: 'bold' }}>Bạn bè </span>
@@ -61,12 +60,12 @@ export const Navbar = () => {
             </WrapperDivText>
             <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {friends?.map((user, index) => {
+
                     return (
-
                         <UserNavbar
-
                             username={user?.userName || user?.email}
                             listUser={user}
+                            idUser={user?._id}
                             key={index}
                             listFollowers={user?.followers}
                             listFollowings={user?.followings}
