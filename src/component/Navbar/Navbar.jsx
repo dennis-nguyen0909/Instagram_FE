@@ -42,12 +42,7 @@ export const Navbar = () => {
         navigate(`/${userName}`)
     }
     const [isNavigating, setIsNavigating] = useState(false);
-    const handleNavigateUser = (userId) => {
 
-        setIsNavigating(true);
-        navigate(`/profile/${userId}`, { state: { userId } });
-
-    }
     return (
         <div style={{ marginTop: '40px', paddingRight: '100px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} >

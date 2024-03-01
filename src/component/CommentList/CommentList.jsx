@@ -13,7 +13,7 @@ export const CommentList = ({ comments, onWheel, ref }) => {
         setVisibleComments(visibleComments + 10); // Tăng số lượng phần tử hiển thị lên 10
     };
     const handleNavigateProfile = (userName) => {
-        navigate(`/${userName}`)
+        navigate(`/profile-user/${userName}`)
     }
 
 

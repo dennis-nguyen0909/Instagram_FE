@@ -20,7 +20,7 @@ export const routes = [
         isShowHeader: true,
     },
     {
-        path: '/:id',
+        path: '/profile-user/:id',
         page: ProfileUserOther,
         isShowHeader: true,
     },

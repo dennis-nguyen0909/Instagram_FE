@@ -20,9 +20,14 @@ export const getDetailUserById = async (id) => {
     const res = await axios.get(`http://localhost:3000/api/user/get-detail/${id}`);
     return res.data;
 }
-export const getAllUser = async () => {
-    const res = await axios.get(`http://localhost:3000/api/user/get-all-user`);
-    return res.data;
+export const getAllUser = async (filter) => {
+    if (filter) {
+        const res = await axios.get(`http://localhost:3000/api/user/get-all-user?filter=${filter}`);
+        return res.data;
+    } else {
+        const res = await axios.get(`http://localhost:3000/api/user/get-all-user`);
+        return res.data;
+    }
 }
 export const updateBirthday = async (birthday, id) => {
     const res = await axios.put(`http://localhost:3000/api/user/update-birthday`, { birthday, id });

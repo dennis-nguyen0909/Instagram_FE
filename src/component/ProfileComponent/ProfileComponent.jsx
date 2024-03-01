@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { DownOutlined } from '@ant-design/icons'
+import { DownOutlined, HeartOutlined } from '@ant-design/icons'
 import * as UserService from '../../service/UserService'
 import { Avatar, Button, Drawer, Image, Input, Select, message } from 'antd'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -11,18 +11,19 @@ import * as PostService from '../../service/PostService'
 import * as ChatService from '../../service/ChatService'
 import { WrapperAvatar } from '../../pages/ProfilePage/style'
 import socket from '../../socket/socket'
-export const ProfileComponent = ({ idUser }) => {
+export const ProfileComponent = ({ idUser, listPosts }) => {
     const [userDetail, setUserDetail] = useState(null);
-    console.log(idUser)
+    // const [posts, setPosts] = useState(listPosts)
     const [isFollow, setIsFollow] = useState(false)
     const [followRealTime, setFollowRealTime] = useState([])
     const [unFollowRealTime, setUnFollowRealTime] = useState([])
     const user = useSelector((state) => state.user)
     const query = useQueryClient();
-    const getUserByUserName = async () => {
+    const params = useParams()
+    console.log("listPosts", listPosts)
+    const getDetailUserById = async () => {
         try {
             const res = await UserService.getDetailUserById(idUser);
-
             return res.response.data;
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -31,18 +32,20 @@ export const ProfileComponent = ({ idUser }) => {
     };
 
     const fetchData = async () => {
-        const userData = await getUserByUserName();
+        const userData = await getDetailUserById();
         setUserDetail(userData);
     };
+    // const handleGetPostByUserId = async () => {
+    //     const res = await PostService.getPostByUser(userDetail?._id);
+    //     setPosts(res?.response?.data)
+    // }
 
     useEffect(() => {
         if (idUser) {
             fetchData();
+            // handleGetPostByUserId();
         }
     }, [idUser]);
-
-
-
     const handleFollow = async () => {
         const res = await UserService.handleFollow(userDetail._id, user?.id)
         if (res.response.code === 200) {
@@ -74,32 +77,23 @@ export const ProfileComponent = ({ idUser }) => {
             console.log("un-follow", data)
         })
     }, [])
+
     useEffect(() => {
         if (userDetail) {
             const checkIdExsit = userDetail?.followers.find((item) => item === user?.id)
             setIsFollow(checkIdExsit !== undefined)
         }
     }, [userDetail]);
-    const handleGetPostByUser = async () => {
-
-        const res = await PostService.getPostByUser(userDetail?._id);
-
-
-
-    }
-
     const navigate = useNavigate()
-    useEffect(() => {
-        handleGetPostByUser();
-    }, [])
     const handleNavigateChat = async (id) => {
-        const res = await ChatService.createChat({ senderId: user?.id, receiverId: id })
-
+        await ChatService.createChat({ senderId: user?.id, receiverId: id })
         navigate(`/direct/inbox/${id}`)
     }
+
+
     return (
-        <div style={{ borderBottom: '1px solid #ccc', margin: '0 100px' }}>
-            <div style={{ height: '230px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ margin: '0 100px' }}>
+            <div style={{ height: '230px', display: 'flex', justifyContent: 'center', alignItems: 'center', borderBottom: '1px solid #ccc', }}>
                 <div style={{ display: 'flex', gap: '90px' }}>
                     <WrapperAvatar >
                         {userDetail?.avatar ? (
@@ -160,9 +154,42 @@ export const ProfileComponent = ({ idUser }) => {
                     </div>
                 </div>
             </div>
-            <div>
 
+            <div style={{ marginTop: '50px', marginLeft: '120px', display: 'flex' }}>
+                {listPosts?.map((post) => (
+                    <div key={post.id} style={{ position: 'relative', display: 'inline-block' }}>
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                opacity: 0,
+                                transition: 'opacity 0.3s ease',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <HeartOutlined style={{ fontSize: '32px', color: '#fff' }} />
+                        </div>
+                        <Image
+                            src={post.images}
+                            width={300}
+                            height={300}
+                            style={{ padding: '0 3px', transition: 'filter 0.3s ease' }}
+                            preview={{
+                                mask: <div style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} />,
+                                maskClassName: 'custom-mask',
+                            }}
+                            className="custom-image"
+                        />
+                    </div>
+                ))}
             </div>
+
         </div>
     )
 }

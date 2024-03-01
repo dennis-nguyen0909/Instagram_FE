@@ -7,23 +7,26 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import * as PostService from '../../service/PostService'
-import { Avatar, Badge, Button, Col, Drawer, Image, Input, Modal, Row, Space, message } from 'antd';
-import { NavDiv, WrapperContainer } from './style';
+import { Avatar, Badge, Button, Col, Drawer, Image, Input, Modal, Popover, Row, Space, message } from 'antd';
+import { NavDiv, WrapperContainer, WrapperDivSearch, WrapperIconPicker, WrapperSpan } from './style';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import defaultPost from '../../assets/images/default.png'
 import * as UserService from '../../service/UserService'
 import * as NotifyService from '../../service/NotifyService'
 import * as ChatService from '../../service/ChatService'
-
+import { AutoComplete } from 'antd';
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
 import socket from '../../socket/socket'
-import { faImage } from '@fortawesome/free-regular-svg-icons';
+import { faFaceSmile, faImage } from '@fortawesome/free-regular-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { InputNotOutline } from '../Post/style';
+import LoadingComponent from '../LoadingComponent/LoadingComponent';
 
 export const Header = () => {
     const user = useSelector((state) => state.user)
-    const message = useSelector((state) => state.message)
-
+    const [searchText, setSearchText] = useState('')
     const postRef = useRef(null)
     const [descPost, setDescPost] = useState('')
     const [open, setOpen] = useState(false);
@@ -32,6 +35,33 @@ export const Header = () => {
     const [roomChats, setRoomChats] = useState([])
     const [notify, setNotify] = useState('')
     const [messageRealTime, setMessageRealTime] = useState(0)
+    const [currentSteps, setCurrentSteps] = useState('chooseFile')
+    const [displayEmoji, setDisplayEmoji] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+    const [userSearch, setUserSearch] = useState([])
+    const [dataSource, setDataSource] = useState([]);
+    const handleToggleEmoji = () => {
+        setDisplayEmoji(!displayEmoji)
+    }
+    const [openEmoji, setOpenEmoji] = useState(false);
+    const hide = () => {
+        setOpenEmoji(false);
+    };
+    const handleOpenChangeEmoji = (newOpen) => {
+        setOpenEmoji(newOpen);
+    };
+    const handleEmojiClick = (e) => {
+        setDescPost(descPost + e.native);
+    };
+    const ComponentEmoji = () => {
+        return (
+            <>
+                <WrapperIconPicker >
+                    <Picker data={data} onEmojiSelect={handleEmojiClick} className='emoji-custom' />
+                </WrapperIconPicker>
+            </>
+        )
+    }
     const showDrawer = () => {
         setOpen(true);
     };
@@ -51,12 +81,36 @@ export const Header = () => {
     };
     const handleCancel = () => {
         setIsModalOpen(false);
+        setPost('')
+        setDescPost('')
+        setCurrentSteps('chooseFile')
     };
     const navigate = useNavigate()
     const [activeItem, setActiveItem] = useState(null)
     const handleCreateNotify = async (data) => {
         const res = await NotifyService.createNotify(data);
 
+    }
+    const searchUser = async () => {
+        const filter = searchText;
+        const res = await UserService.getAllUser(filter);
+
+        // Kiểm tra xem dữ liệu trả về có tồn tại không
+        if (res && res.response && res.response.data) {
+            const users = res.response.data;
+
+            // Kiểm tra xem trong danh sách kết quả tìm kiếm có người dùng nào khác với người dùng hiện tại không
+            const userExists = users.some(item => item._id !== user?.id);
+            console.log(userExists)
+            if (userExists) {
+                setUserSearch(users);
+            }
+        } else {
+            console.error("Invalid response data:", res?.response?.data);
+        }
+    };
+    const handleSearch = async (value) => {
+        await searchUser();
     }
     useEffect(() => {
         socket.on('new-message', newMessage => {
@@ -87,6 +141,7 @@ export const Header = () => {
     const handleCreatePost = async () => {
         const res = await PostService.createPost({ id: user?.id, desc: descPost, images: post })
         if (+res.response.EC === 0) {
+            await getAllPost();
             message.success("Create post is success!!")
             setIsModalOpen(false);
 
@@ -105,13 +160,108 @@ export const Header = () => {
         setOpen(true)
     }
 
-    const handleGetDetailUser = async (userId) => {
-        const res = await UserService.getDetailUserById(userId);
-        return res.response.data
+    const renderModal = () => {
+        if (currentSteps === 'chooseFile') {
+            return modalChooseFile();
+        } else if (currentSteps === 'reviewImage') {
+            return modalReviewImage();
+        } else if (currentSteps === 'createPost') {
+            return modalCreatePost();
+        }
     }
+    const modalReviewImage = () => {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ width: '600px' }}>
+                    {post && (<Image src={post} preview={false} style={{ width: '594px', height: '594px', objectFit: 'cover' }} />)}
+                </div>
+                <div style={{ display: 'flex', justifyContent: "flex-end" }} >
+                    <span
+                        onClick={() => setCurrentSteps('createPost')}
+                        style={{ color: 'rgb(0,150,247)', fontWeight: 'bold', cursor: 'pointer', }}>
+                        Tiếp</span>
+                </div>
+            </div>
+        )
+    }
+    const modalChooseFile = () => {
+        return (
+            <LoadingComponent isLoading={isLoading}>
+                <div style={{ display: 'flex', gap: '20px', height: '500px', width: '600px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', marginBottom: '100px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ fontSize: '50px' }}>
+                                <PlaySquareOutlined />
+                                <FontAwesomeIcon icon={faImage} />
+                            </div>
+                            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>Chọn ảnh từ máy tính</div>
+                            <Button
+                                onClick={handleSelectedPic}
+                                style={{ backgroundColor: 'rgb(0,150,247)', color: '#fff', fontWeight: 'bold', marginTop: '30px' }}
+                            >Chọn từ máy tính</Button>
+                            <input type='file' accept='image/*'
+                                onChange={(e) => uploadPost(e.target.files[0])}
+                                ref={postRef} style={{ display: 'none' }} />
+                        </div>
+                    </div>
 
+                </div>
+            </LoadingComponent>
+        )
+    }
+    const modalCreatePost = () => {
+        return (
+            <div style={{ borderTop: '1px solid #ccc' }}>
+                <div style={{ display: 'flex', maxHeight: '700px' }}>
+                    <div style={{ height: '500px', width: '580px' }} >
+                        <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column', gap: '10px', maxWidth: '700px' }}>
+                            {/* <Button onClick={handleSelectedPic}>Chọn ảnh từ máy tính</Button> */}
+                            {post ? (<Image src={post} preview={false} style={{ width: '604px', height: '500px', marginRight: '24px', objectFit: 'cover' }} />) : <Image src={defaultPost} preview={false} />}
+                            <input type='file' accept='image/*'
+                                onChange={(e) => uploadPost(e.target.files[0])}
+                                ref={postRef} style={{ display: 'none' }} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', borderLeft: '1px solid #ccc', }}>
+                        <div style={{ display: 'flex', marginLeft: '10px', gap: '10px', alignItems: 'center' }}>
+                            <Image src={user?.avatar} preview={false} width={'40px'} height={'40px'} style={{ borderRadius: '50%' }} />
+                            <p style={{ fontWeight: 'bold' }}>{user?.userName || user.name}</p>
+                        </div>
+                        <div style={{
+                            marginLeft: '10px',
+                            fontWeight: '800',
+                        }}>
+                            <textarea
+                                style={{ height: '200px', width: '300px', fontSize: '18px', overflow: 'hidden', border: 'none', resize: 'none', outline: 'none' }}
+                                value={descPost}
+                                onChange={(e) => onChangeDescPost(e)}
+                                placeholder='Viết chú thích'
+                            />
+                            <div style={{ borderBottom: '1px solid #ccc', padding: '10px 0' }}>
+                                <Popover
+                                    content={ComponentEmoji}
+                                    title="Emoji"
+                                    trigger="click"
+                                    open={openEmoji}
+                                    onOpenChange={handleOpenChangeEmoji}
+
+                                >
+                                    <FontAwesomeIcon onClick={handleToggleEmoji} icon={faFaceSmile} size='2x' style={{ cursor: 'pointer' }} />
+                                </Popover>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <WrapperSpan
+                        onClick={handleCreatePost}>Chia sẻ</WrapperSpan>
+                </div>
+            </div>
+        )
+    }
     const uploadPost = async (pics) => {
         if (pics.type === "image/png" || pics.type === "image/jpeg") {
+            setIsLoading(true)
             const formData = new FormData();
             formData.append('file', pics);
             formData.append('upload_preset', "chat-app");
@@ -120,11 +270,14 @@ export const Header = () => {
                 .then((data) => {
 
                     setPost(data?.data.url.toString() + "");
+                    console.log(post)
+                    setCurrentSteps("reviewImage")
                 })
                 .catch((err) => {
                     console.error('Cloudinary error', err);
                 });
         }
+        setIsLoading(false)
     }
     const location = useLocation()
     useEffect(() => {
@@ -139,10 +292,27 @@ export const Header = () => {
         const res = await ChatService.getChat(user?.id);
         setRoomChats(res?.response.data);
     }
+    const getAllPost = async () => {
+        const res = await PostService.getAllPost();
+        return res.response.data;
+    }
     useEffect(() => {
         getChat()
     }, [])
-
+    const handleNavigateUserSearch = (item) => {
+        navigate(`/profile-user/${item?._id}`)
+        setOpen(false)
+        setSearchText('')
+    }
+    // const getAllUser = async () => {
+    //     const res = await UserService.getAllUser();
+    //     setUserSearch(res.response.data)
+    //     setDataSource(res?.response?.data.map((item) => ({ value: item.userName || item?.name, avatar: item?.avatar })))
+    // }
+    // useEffect(() => {
+    //     getAllUser();
+    // }, [])
+    console.log("user", userSearch)
     return (
         <WrapperContainer>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: '30px', paddingLeft: '10px' }}>
@@ -171,15 +341,17 @@ export const Header = () => {
                 <div onClick={() => handleItemClick('message')} className={activeItem === 'message' ? 'active' : ''}>
                     {activeItem === 'message' ?
                         (
-                            <Badge>
-                                <MessageFilled />
-                            </Badge>
+                            // <Badge>
+                            <MessageFilled />
+                            // </Badge>
                         )
                         : (
-                            <Badge style={{ fontSize: '10px', display: 'flex' }} count={messageRealTime} size='small'>
+                            <>
+                                {/* <Badge style={{ fontSize: '10px', display: 'flex' }} count={messageRealTime} size='small'> */}
                                 < MessageOutlined />
                                 <p>Tin nhắn</p>
-                            </Badge>
+                                {/* </Badge> */}
+                            </>
 
                         )}
                     {/* <Space size="large">
@@ -196,7 +368,6 @@ export const Header = () => {
                 </div>
                 <div onClick={() => handleItemClick('create')} className={activeItem === 'create' ? 'active' : ''}>
                     {activeItem === 'create' ? <PlusSquareFilled /> : <PlusSquareOutlined />}
-
                     <p>Tạo</p>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center' }} onClick={() => handleItemClick('AVT')} className={activeItem === 'AVT' ? 'active' : ''}>
@@ -211,7 +382,28 @@ export const Header = () => {
             <Drawer style={{ marginLeft: '70px' }} title="Search" placement="left" onClose={onClose} open={open}>
                 <div style={{ marginBottom: '40px' }} >
                     <h2>Search</h2>
-                    <Input placeholder="search" />
+                    <Input placeholder="search" onChange={(e) => setSearchText(e.target.value)} />
+                    <p style={{ color: 'red' }} onClick={handleSearch}>Tìm kiếm</p>
+                    {/* <AutoComplete
+                        style={{ width: 200 }}
+                        dataSource={dataSource}
+                        placeholder="Search users"
+                        onSearch={handleSearch}
+                    >
+                    </AutoComplete> */}
+                    <WrapperDivSearch>
+                        {userSearch ? userSearch?.map((item) => {
+                            return (
+                                <div className='wrapper-avatar' style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }} onClick={() => handleNavigateUserSearch(item)}>
+                                    <Avatar src={item.avatar} size={'large'} />
+                                    <span style={{ fontSize: '14px' }}>{item?.userName || item?.name || item?.email}</span>
+                                </div>
+                            )
+                        }) : (
+                            <>
+                                Không thấy
+                            </>)}
+                    </WrapperDivSearch>
                 </div>
                 <div style={{ borderTop: '1px solid #ccc' }}>
                     <h2> recent
@@ -252,13 +444,10 @@ export const Header = () => {
             <Modal
                 footer={null}
                 title="Tạo bài viết"
-                width={800} open={isModalOpen}
-                onOk={handleOk} onCancel={handleCancel}>
-                <div style={{ display: 'flex', gap: '20px', maxHeight: '500px' }}>
-                    <PlaySquareOutlined />
-                    <FontAwesomeIcon icon={faImage} />
+                width={currentSteps === "createPost" ? 950 : 650} open={isModalOpen}
 
-                </div>
+                onOk={handleOk} onCancel={handleCancel}>
+                {renderModal()}
             </Modal>
             <Drawer style={{ marginLeft: '180px' }} title="Thông báo" placement='left' onClose={onClose2} open={open2}>
                 <h1 style={{ fontSize: '16px' }}>Hôm nay</h1>

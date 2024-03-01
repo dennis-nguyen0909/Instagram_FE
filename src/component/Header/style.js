@@ -10,6 +10,13 @@ export const WrapperContainer = styled.div`
     height:100vh;
 
 `
+export const WrapperIconPicker = styled.div`
+
+    .emoji-custom{
+        width:50px;
+        height:50px;
+    }
+`
 export const NavDiv = styled.div`
     margin-bottom:200px;
 
@@ -18,7 +25,7 @@ export const NavDiv = styled.div`
         padding-left:10px;
         display: flex;
         gap: 10px;
-        font-size: 18px;
+        font-size: 15px;
     }
     div:hover{
         cursor:pointer;
@@ -34,4 +41,24 @@ export const NavDiv = styled.div`
         }
     }
     
+`
+export const WrapperSpan = styled.span`
+    color :rgb(0,150,247);
+    font-weight:bold;
+    cursor:pointer;
+
+    &:hover {
+        color:black;
+    }
+`
+export const WrapperDivSearch = styled.div`
+ 
+    .wrapper-avatar{
+        padding:3px 3px;
+        &:hover{
+            border-radius:5px;
+            background-color:#ccc;
+            cursor:pointer;
+        }
+    }
 `

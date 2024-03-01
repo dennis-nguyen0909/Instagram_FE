@@ -17,7 +17,7 @@ export const UserNavbar = ({ listUser, listFollowers, listFollowings, username, 
     const [loading, setLoading] = useState(false)
     const handleNavigateProfile = (idUser) => {
 
-        navigate(`/${idUser}`)
+        navigate(`/profile/${idUser}`)
     }
 
     const handleFollow = async () => {
@@ -52,7 +52,6 @@ export const UserNavbar = ({ listUser, listFollowers, listFollowings, username, 
         <>
             <WrapperDivUserSuggest>
                 <AvatarComponent image={listUser?.avatar || avt} name={'Gợi ý cho bạn'} email={listUser?.name || listUser?.userName} onClick={() => handleNavigateProfile(idUser)} />
-
                 <LoadingComponent isLoading={loading}>
                     {isFollow ? (
                         <span style={{ color: 'rgb(0,150,247)', fontWeight: 'bold', cursor: 'pointer', marginRight: '20px' }} onClick={handleUnFollow} >Hủy theo dõi</span>
@@ -60,8 +59,6 @@ export const UserNavbar = ({ listUser, listFollowers, listFollowings, username, 
                         <span style={{ color: 'rgb(0,150,247)', fontWeight: 'bold', cursor: 'pointer', marginRight: '20px' }} onClick={handleFollow} >Theo dõi</span>
                     )}
                 </LoadingComponent>
-
-
             </WrapperDivUserSuggest>
         </>
     )

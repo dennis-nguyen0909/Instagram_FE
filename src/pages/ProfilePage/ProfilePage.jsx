@@ -12,8 +12,11 @@ import { useRef } from 'react'
 import { HeartOutlined } from '@ant-design/icons';
 import axios from 'axios'
 import { useMutationHook } from '../../hook/useMutationHook'
-import { WrapperAvatar } from './style'
+import { WrapperAvatar } from '../../pages/ProfilePage/style'
 import { useLocale } from 'antd/es/locale'
+import { ProfileComponent } from '../../component/ProfileComponent/ProfileComponent'
+import { ProfileUserComponent } from '../../component/ProfileUserComponent/ProfileUserComponent'
+
 export const ProfilePage = () => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -21,7 +24,6 @@ export const ProfilePage = () => {
     const [open, setOpen] = useState(false);
     const [avatar, setAvatar] = useState('')
     const { state } = useLocation()
-
     const user = useSelector((state) => state.user)
     const [userDetail, setUserDetail] = useState({
         id: "",
@@ -49,22 +51,17 @@ export const ProfilePage = () => {
     const getDetailUser = async () => {
         const res = await UserService.getDetailUserById(params.id || state.userId);
         setUserDetail({ ...res.response.data })
-        // return res.response.data
     }
-
     useEffect(() => {
         getDetailUser();
     }, [params.id, userDetail?.avatar])
-    // console.log(userDetail)
-    // const { data } = useQuery({ queryKey: ['user-detail'], queryFn: getDetailUser })
-    // const userDetail = data
     const fileInputRef = useRef(null)
     useEffect(() => {
-        setAvatar(user?.avatar)
-        setUserName(user?.userName)
-        setDesc(user?.desc)
-        setSex(user?.sex)
-    }, [user?.avatar, user?.userName, user?.desc, user?.sex])
+        setAvatar(userDetail?.avatar)
+        setUserName(userDetail?.userName)
+        setDesc(userDetail?.desc)
+        setSex(userDetail?.sex)
+    }, [userDetail?.avatar, userDetail?.userName, userDetail?.desc, userDetail?.sex])
 
     useEffect(() => {
         getDetailUser();
@@ -166,111 +163,23 @@ export const ProfilePage = () => {
 
     const handleGetPost = async () => {
         const res = await PostService.getPostByUser(params.id);
-        console.log(res)
         return res.response.data
     }
-
+    const queryClient = useQueryClient()
     const { data: posts } = useQuery({ queryKey: ['posts'], queryFn: handleGetPost }); // Không gọi handleGetPost ngay lập tức, chỉ truyền tham chiếu của nó vào queryFn
-
-    console.log(userDetail)
+    // useEffect(() => {
+    //     if (userDetail?._id) {
+    //         queryClient.invalidateQueries({ queryKey: ['posts'] })
+    //     }
+    // }, [params.id])
+    console.log(userDetail?._id === user?.id)
 
     return (
         <>
-            <Button onClick={handleLogOut}>Thoat</Button>
-            <div style={{ borderBottom: '1px solid #ccc', margin: '0 50px' }}>
-                <div style={{ height: '230px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '90px' }}>
-                        <WrapperAvatar >
-                            {avatar ? (
-                                <img className='avt' preview={false} src={avatar} style={{
-                                    height: '180px', width: '180px', objectFit: 'cover', borderRadius: '50%'
-                                }} />
-                            ) : <Image className='avt' src={avatarDefault} preview={false} style={{
-                                height: '180px', width: '180px', objectFit: 'cover', borderRadius: '50%'
-                            }} />}
-                            {/* <Button className='btn' onClick={handleClickEditAvatar}>Chinh sua</Button> */}
-                            {/* <Button onClick={HandleUpload}>Thay đổi ảnh đại diện</Button> */}
-                            <Button style={{ margin: '10px 0' }} onClick={handleClickEditAvatar}>Thay đổi ảnh đại diện</Button>
-                            <input type='file'
-                                accept='image/*'
-                                ref={fileInputRef}
-                                onChange={(e) => postAvatarToCloundinary(e.target.files[0])}
-                                style={{ display: 'none' }}></input>
-                        </WrapperAvatar>
-                        <div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
-                                <p style={{ fontWeight: 'bold' }}>{userDetail?.userName}</p>
-                                <Button
-                                    onClick={showDrawer}
-                                    style={{
-                                        color: 'black',
-                                        fontWeight: 'bold',
-                                        backgroundColor: 'rgb(239,239,239)'
-                                    }} >Chỉnh sửa trang cá nhân</Button>
-                                <Button
-                                    style={{
-                                        color: 'black',
-                                        fontWeight: 'bold',
-                                        backgroundColor: 'rgb(239,239,239)'
-                                    }}>Xem kho lưu trữ</Button>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                                    <p style={{ fontWeight: 'bold' }}>{userDetail?.posts.length}</p>
-                                    <span>Bài viết</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                                    <p style={{ fontWeight: 'bold' }}>{userDetail?.followers.length}</p>
-                                    <span>Người theo dõi</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                                    <span>Đang theo dõi</span>
-                                    <p style={{ fontWeight: 'bold' }}>{userDetail?.followings.length}</p>
-                                    <span>người dùng</span>
-                                </div>
-
-                            </div>
-                            <div>
-                                <p style={{ fontWeight: 'bold' }}>{userDetail?.name}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div style={{ marginTop: '20px', marginLeft: '120px' }}>
-                {posts?.map((post) => (
-                    <div key={post.id} style={{ position: 'relative', display: 'inline-block' }}>
-                        <div
-                            style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                opacity: 0,
-                                transition: 'opacity 0.3s ease',
-                                display: 'flex',
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                            }}
-                        >
-                            <HeartOutlined style={{ fontSize: '32px', color: '#fff' }} />
-                        </div>
-                        <Image
-                            src={post.images}
-                            width={300}
-                            height={300}
-                            style={{ padding: '0 3px', transition: 'filter 0.3s ease' }}
-                            preview={{
-                                mask: <div style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} />,
-                                maskClassName: 'custom-mask',
-                            }}
-                            className="custom-image"
-                        />
-                    </div>
-                ))}
-            </div>
+            {userDetail?._id === user?.id
+                ? (
+                    <ProfileUserComponent idUser={params.id} listPosts={posts} />)
+                : (<ProfileComponent idUser={params.id} listPosts={posts} />)}
 
             <Drawer width={'50%'} title="Chỉnh sửa thông tin cá nhân" onClose={onClose} open={open}>
                 <div>
