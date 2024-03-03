@@ -1,4 +1,4 @@
-import { Avatar, Button, Image, Input, Modal, Popover, message } from 'antd'
+import { Avatar, Button, Col, Image, Input, Modal, Popover, Row, message } from 'antd'
 import React, { useEffect, useRef, useState } from 'react'
 import avt from '../../../src/assets/images/slider2.jpg'
 import Slider from "react-slick";
@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMutationHook } from '../../hook/useMutationHook';
 import { format, render, cancel, register } from 'timeago.js';
 import vi from 'timeago.js/lib/lang/vi';
-import { faHeart as solidHeart, faShare, faBookBookmark, faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as solidHeart, faShare, faBookBookmark, faEllipsis, faComment } from '@fortawesome/free-solid-svg-icons';
 import { faComment as regularComment, faHeart, faBookmark, faFaceSmile, } from '@fortawesome/free-regular-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import io from 'socket.io-client';
@@ -30,38 +30,22 @@ export const Post = (props) => {
     // Config dateTime
     register('vi', vi);
     const formattedTime = format(postCreated, 'vi');
-    // 
     const user = useSelector((state) => state.user)
     const [like, setLike] = useState(likes)
     const [isLike, setIsLike] = useState(false)
     const [notify, setNotify] = useState(false)
-    const [disableLikeButton, setDisableLikeButton] = useState(false)
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isOpen, setIsOpen] = useState(false);
     const [comment, setComment] = useState("")
     const [comments, setComments] = useState(commentPost)
     const [commentRealTime, setCommentRealTime] = useState(commentPost)
     const focusComment = useRef();
     const [displayEmoji, setDisplayEmoji] = useState(false)
     const [loadingComment, setLoadingComment] = useState(false)
-    const navigate = useNavigate()
-    const openModal = () => {
-        setIsOpen(true);
-    };
+    const [showModal, setShowModal] = useState(false);
 
-    const closeModal = () => {
-        setIsOpen(false);
+    const toggleModal = () => {
+        setShowModal(!showModal);
     };
-    const showModal = () => {
-        setIsModalOpen(true);
-    };
-    const handleOk = () => {
-        setIsModalOpen(false);
-    };
-    const handleCancel = () => {
-        setIsModalOpen(false);
-    };
-    // const Modal = ({ isOpen, onClose, children }) => {
+    const navigate = useNavigate()
     //     if (!isOpen) return null; // Không hiển thị nếu isOpen là false
 
     //     return (
@@ -81,9 +65,6 @@ export const Post = (props) => {
             setIsLike(false)
         }
     })
-
-
-
     const handleLikePost = async () => {
         try {
             await PostService.likePost2({ id: postId, userId: user?.id })
@@ -91,11 +72,11 @@ export const Post = (props) => {
         } catch (error) {
             console.log(error)
         }
-        // setLike(isLike ? like - 1 : like + 1)
         setIsLike(!isLike)
     }
     const handleCommentPost = async () => {
-        showModal()
+        toggleModal();
+
     }
     const handleSharePost = () => {
 
@@ -114,14 +95,11 @@ export const Post = (props) => {
     const getAllPost = async () => {
         try {
             const res = await PostService.getAllPost();
-
         } catch (error) {
-            // Xử lý lỗi nếu có
             console.error("Error fetching posts:", error);
         }
     };
-
-    const handlePostComment = (e) => {
+    const handleOnChangeComment = (e) => {
         setComment(e.target.value)
 
     }
@@ -130,9 +108,6 @@ export const Post = (props) => {
         handleUpdatePostComment(postId, user?.id, comment)
     }
     useEffect(() => {
-        // socket.on('new-comment', (msg) => {
-        //     setCommentRealTime(msg)
-        // })
         socket.on('new-comment2', (msg) => {
             setCommentRealTime(msg)
 
@@ -162,7 +137,6 @@ export const Post = (props) => {
             </>
         )
     }
-    const [text, setText] = useState('');
     const commentRef = useRef(null);
     const handleScroll = (e) => {
         const amountScroll = 50;
@@ -195,9 +169,7 @@ export const Post = (props) => {
             </>
         )
     }
-
     const navigateProfileUser = (username) => {
-
         setTimeout(() => {
             navigate(`/${username}`)
         }, 2000)
@@ -208,6 +180,11 @@ export const Post = (props) => {
             scrollRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [comments])
+    const [currentImageIndex, setCurrentImageIndex] = useState(0)
+
+    const handleImageChange = (index) => {
+        setCurrentImageIndex(index);
+    }
     return (
         <>
             <div style={{ width: '468px', height: '700px', borderBottom: '1px solid #ccc' }} >
@@ -226,7 +203,19 @@ export const Post = (props) => {
                     </div>
                 </div>
                 <div style={{ width: '100%' }}>
-                    <Image src={images} style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} preview={false} />
+                    {images?.length > 1 ? (
+                        <div style={{ position: 'relative' }}>
+                            <Image src={images[currentImageIndex]} style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} preview={false} />
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: '20px', left: '0', width: '100%', gap: '10px' }}>
+                                {images.map((_, index) => (
+                                    <span key={index} style={{ color: index === currentImageIndex ? '#fff' : '#ccc', cursor: 'pointer', fontSize: '30px' }}
+                                        onClick={() => handleImageChange(index)}>•</span>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <Image src={images} style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} preview={false} />
+                    )}
                 </div>
                 <WrapperIcon>
                     <div style={{ display: 'flex', gap: '13px' }}>
@@ -260,203 +249,173 @@ export const Post = (props) => {
                             <p style={{ fontWeight: 'bold', paddingRight: '8px' }}>{userName}</p>
                             <p>{desc}</p>
                         </div>
-                        <div style={{ color: '#888' }}>Xem tất cả bình luận</div>
+                        <div style={{ color: '#888', cursor: 'pointer' }} onClick={handleCommentPost}>Xem tất cả bình luận</div>
                     </div>
-                    <WrapperInput style={{ marginTop: '10px' }}>
+                    {/* <WrapperInput style={{ marginTop: '10px' }}>
                         <input value={comment} onChange={(e) => setComment(e.target.value)} style={{ borderTop: 'none', borderRight: 'none', borderLeft: 'none', borderBottom: 'none', boxShadow: 'none', width: '100%', fontSize: '14px' }}
                             placeholder='Thêm bình luận' />
-                    </WrapperInput>
+                    </WrapperInput> */}
                 </div>
             </div >
-
-            <Modal
-
-                style={{ padding: 0, border: '0' }}
-                footer={null}
-                width={1400} open={isModalOpen}
-
-                onOk={handleOk} onCancel={handleCancel}>
-                <div style={{ display: 'flex', gap: '20px', maxHeight: '700px', height: '650px' }}>
-                    <div style={{ display: 'flex' }}>
-                        <div >
-                            <img style={{ borderRadius: '3px' }} width={'765px'} height={'650px'} src={images} />
-                        </div>
-                        <div style={{ width: '560px', display: 'flex', flexDirection: 'column' }}>
-                            <WrapperModalRight>
-                                <WrapperAccount>
-                                    <Avatar src={avatar} size={'large'} />
-                                    <p style={{ fontWeight: 'bold', }}>{userName}</p>
-                                </WrapperAccount>
-                                <div>
-                                    <FontAwesomeIcon icon={faEllipsis} style={{ fontSize: '20px' }} />
-                                </div>
-                            </WrapperModalRight>
-                            <div>
-                                <div style={{ padding: '0 10px' }} >
-                                    <WrapperComment onWheel={(e) => handleScroll(Math.sign(e.deltaY))} ref={commentRef} >
-                                        {/* <ScrollContent scrollPosition={scrollPosition}> */}
-                                        <WrapperAccount>
-                                            <Avatar src={avatar} size={'large'} />
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                                <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-                                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                                        <div style={{ fontWeight: 'bold', }}>{userName}</div>
-                                                        <div style={{ fontWeight: '400' }}>{desc}</div>
-                                                    </div>
-                                                    <div style={{ fontSize: '10px', color: 'rgb(115,115,115)', paddingTop: '5px' }}>
-                                                        {formattedTime}
+            <div style={{ position: 'relative', zIndex: 999 }} >
+                {showModal && (
+                    <>
+                        <div className="modal-overlay" >
+                            <div className="modal-content">
+                                <div style={{ width: '1100px', height: '90vh' }}>
+                                    <Row>
+                                        <Col span={14}>
+                                            {images?.length > 1 ? (
+                                                <div style={{ position: 'relative' }}>
+                                                    <img src={images[currentImageIndex]} style={{ width: '100%', height: '90vh', objectFit: 'cover', }} />
+                                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: '20px', left: '0', width: '100%', gap: '10px' }}>
+                                                        {images.map((_, index) => (
+                                                            <span key={index} style={{ color: index === currentImageIndex ? '#fff' : '#ccc', cursor: 'pointer', fontSize: '30px' }}
+                                                                onClick={() => handleImageChange(index)}>•</span>
+                                                        ))}
                                                     </div>
                                                 </div>
-
-                                            </div>
-                                        </WrapperAccount>
-                                        <div ref={scrollRef}>
-                                            <CommentList comments={uiComments} />
-                                        </div>
-                                    </WrapperComment>
-                                </div>
-                            </div>
-                            <WrapperIconModal>
-                                <WrapperIcon>
-                                    <div style={{ display: 'flex', gap: '13px', position: 'relative' }}>
-                                        <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            {isLike ? (<FontAwesomeIcon style={{ color: 'red', cursor: 'pointer' }} icon={solidHeart} onClick={handleLikePost} />) : (
-                                                <FontAwesomeIcon style={{ cursor: 'pointer' }} icon={faHeart} onClick={handleLikePost} />
-
+                                            ) : (
+                                                <img src={images} style={{ width: '100%', height: '90vh', objectFit: 'cover', }} />
                                             )}
-                                        </div>
-                                        <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-                                            <FontAwesomeIcon icon={regularComment} flip="horizontal" style={{ cursor: 'pointer' }} onClick={handleFocusComment} />
-                                        </div>
-                                        <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-                                            <FontAwesomeIcon icon={faShare} style={{ cursor: 'pointer' }} onClick={handleSharePost} />
-                                        </div>
-                                    </div>
-                                    <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-                                        <FontAwesomeIcon icon={faBookmark} style={{ cursor: 'pointer' }} />
-                                    </div>
-                                </WrapperIcon>
-                                <div style={{ paddingTop: '10px' }}>
-                                    {formattedTime}
-                                </div>
-                            </WrapperIconModal>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', marginLeft: '10px' }}>
-                                <Popover
-                                    content={ComponentEmoji}
-                                    title="Emoji"
-                                    trigger="click"
-                                    open={openEmoji}
-                                    onOpenChange={handleOpenChangeEmoji}
-                                >
-                                    <FontAwesomeIcon onClick={handleToggleEmoji} icon={faFaceSmile} size='2x' style={{ cursor: 'pointer' }} />
-                                </Popover>
-                                <InputNotOutline
-                                    ref={focusComment}
-                                    value={comment}
-                                    placeholder='Thêm bình luận'
-                                    onChange={(e) => handlePostComment(e)}
-                                />
-                                <div style={{ marginRight: '10px' }}>
-                                    <span style={{ cursor: 'pointer', fontWeight: 'bold', color: 'rgb(18,152,247)' }} onClick={postCommentToSocket} >Đăng</span>
+                                        </Col>
+                                        <Col span={10}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', borderBottom: '1px solid #ccc', padding: '0 10px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '10px' }}>
+                                                    <Avatar src={user?.avatar} />
+                                                    <p>{user?.userName}</p>
+                                                </div>
+                                                <div>
+                                                    <FontAwesomeIcon icon={faEllipsis} />
+                                                </div>
+                                                <button style={{ position: 'absolute', right: '-100px', top: '5px', cursor: 'pointer' }} onClick={toggleModal}>X</button>
+                                            </div>
+                                            <div>
+                                                {comments?.length === 0 ? (
+                                                    <div>
+                                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '100px', borderBottom: '1px solid #ccc', paddingBottom: '280px' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                                <b style={{ fontSize: '18px' }}>Chưa có bình luận nào</b>
+                                                                <p >Bắt đầu trò chuyện</p>
+                                                            </div>
+                                                        </div>
+                                                        <WrapperIcon>
+                                                            <div style={{ display: 'flex', gap: '13px', position: 'relative' }}>
+                                                                <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                                    {isLike ? (<FontAwesomeIcon style={{ color: 'red', cursor: 'pointer' }} icon={faHeart} onClick={handleLikePost} />) : (
+                                                                        <FontAwesomeIcon style={{ cursor: 'pointer' }} icon={faHeart} onClick={handleLikePost} />
+
+                                                                    )}
+                                                                </div>
+                                                                <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                                                                    <FontAwesomeIcon icon={faComment} flip="horizontal" style={{ cursor: 'pointer' }} onClick={handleFocusComment} />
+                                                                </div>
+                                                                <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                                                                    <FontAwesomeIcon icon={faShare} style={{ cursor: 'pointer' }} onClick={handleSharePost} />
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                                                                <FontAwesomeIcon icon={faBookmark} style={{ cursor: 'pointer' }} />
+                                                            </div>
+                                                        </WrapperIcon>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', marginLeft: '10px' }}>
+                                                            <Popover
+                                                                content={ComponentEmoji}
+                                                                title="Emoji"
+                                                                trigger="click"
+                                                                open={openEmoji}
+                                                                onOpenChange={handleOpenChangeEmoji}
+                                                            >
+                                                                <FontAwesomeIcon onClick={handleToggleEmoji} icon={faFaceSmile} size='2x' style={{ cursor: 'pointer' }} />
+                                                            </Popover>
+                                                            <InputNotOutline
+                                                                ref={focusComment}
+                                                                value={comment}
+                                                                placeholder='Thêm bình luận'
+                                                                onChange={(e) => handleOnChangeComment(e)}
+                                                            />
+                                                            <div style={{ marginRight: '10px' }}>
+                                                                <span style={{ cursor: 'pointer', fontWeight: 'bold', color: 'rgb(18,152,247)' }} onClick={postCommentToSocket} >Đăng</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <div>
+                                                        <div style={{ display: 'flex', padding: '0 10px' }}>
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                                <WrapperComment onWheel={(e) => handleScroll(Math.sign(e.deltaY))} ref={commentRef}  >
+                                                                    <WrapperAccount>
+                                                                        <Avatar src={avatar} size={'large'} />
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                                                            <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
+                                                                                <div style={{ display: 'flex', gap: '10px' }}>
+                                                                                    <div style={{ fontWeight: 'bold', }}>{userName}</div>
+                                                                                    <div style={{ fontWeight: '400' }}>{desc}</div>
+                                                                                </div>
+                                                                                <div style={{ fontSize: '10px', color: 'rgb(115,115,115)', paddingTop: '5px' }}>
+                                                                                    {/* {formattedTime} */}
+                                                                                </div>
+                                                                            </div>
+
+                                                                        </div>
+                                                                    </WrapperAccount>
+                                                                    <div ref={scrollRef} >
+                                                                        <CommentList comments={uiComments} />
+                                                                    </div>
+                                                                </WrapperComment>
+                                                            </div>
+                                                        </div>
+                                                        <WrapperIcon>
+                                                            <div style={{ display: 'flex', gap: '13px', position: 'relative' }}>
+                                                                <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                                                    {isLike ? (<FontAwesomeIcon style={{ color: 'red', cursor: 'pointer' }} icon={solidHeart} onClick={handleLikePost} />) : (
+                                                                        <FontAwesomeIcon style={{ cursor: 'pointer' }} icon={faHeart} onClick={handleLikePost} />
+
+                                                                    )}
+                                                                </div>
+                                                                <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                                                                    <FontAwesomeIcon icon={faComment} flip="horizontal" style={{ cursor: 'pointer' }} onClick={handleFocusComment} />
+                                                                </div>
+                                                                <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                                                                    <FontAwesomeIcon icon={faShare} style={{ cursor: 'pointer' }} onClick={handleSharePost} />
+                                                                </div>
+                                                            </div>
+                                                            <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+                                                                <FontAwesomeIcon icon={faBookmark} style={{ cursor: 'pointer' }} />
+                                                            </div>
+                                                        </WrapperIcon>
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', marginLeft: '10px' }}>
+                                                            <Popover
+                                                                content={ComponentEmoji}
+                                                                title="Emoji"
+                                                                trigger="click"
+                                                                open={openEmoji}
+                                                                onOpenChange={handleOpenChangeEmoji}
+                                                            >
+                                                                <FontAwesomeIcon onClick={handleToggleEmoji} icon={faFaceSmile} size='2x' style={{ cursor: 'pointer' }} />
+                                                            </Popover>
+                                                            <InputNotOutline
+                                                                ref={focusComment}
+                                                                value={comment}
+                                                                placeholder='Thêm bình luận'
+                                                                onChange={(e) => handleOnChangeComment(e)}
+                                                            />
+                                                            <div style={{ marginRight: '10px' }}>
+                                                                <span style={{ cursor: 'pointer', fontWeight: 'bold', color: 'rgb(18,152,247)' }} onClick={postCommentToSocket} >Đăng</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Col>
+                                    </Row>
                                 </div>
                             </div>
+
                         </div>
-                    </div>
-                </div>
-
-            </Modal >
-
-
-            {/* <Modal onOpen={openModal} isOpen={isOpen} onClose={closeModal}>
-                <div style={{ display: 'flex' }}>
-                    <div >
-                        <img width={'765px'} height={'760px'} src={images} />
-                    </div>
-
-                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
-                        <WrapperModalRight>
-                            <WrapperAccount>
-                                <Avatar src={avatar} size={'large'} />
-                                <p style={{ fontWeight: 'bold', }}>{userName}</p>
-                            </WrapperAccount>
-                            <div>
-                                <FontAwesomeIcon icon={faEllipsis} style={{ fontSize: '20px' }} />
-                            </div>
-                        </WrapperModalRight>
-
-                        <div>
-                            <div style={{ padding: '0 10px', height: '550px' }}>
-                                <WrapperAccount>
-                                    <Avatar src={avatar} size={'large'} />
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-                                            <div style={{ display: 'flex', gap: '10px' }}>
-                                                <div style={{ fontWeight: 'bold', }}>{userName}</div>
-                                                <div style={{ fontWeight: '400' }}>{desc}</div>
-                                            </div>
-                                            <div style={{ fontSize: '10px', color: 'rgb(115,115,115)', paddingTop: '5px' }}>
-                                                {formattedTime}
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </WrapperAccount>
-                                <WrapperAccount>
-                                    <Avatar src={avatar} size={'large'} />
-                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
-                                            <div style={{ display: 'flex', gap: '10px' }}>
-                                                <div style={{ fontWeight: 'bold', }}>{userName}</div>
-                                                <div style={{ fontWeight: '400' }}>{desc}</div>
-                                            </div>
-                                            <div style={{ fontSize: '10px', color: 'rgb(115,115,115)', paddingTop: '5px' }}>
-                                                {formattedTime}
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </WrapperAccount>
-
-                            </div>
-                        </div>
-                        <WrapperIconModal>
-                            <WrapperIcon>
-                                <div style={{ display: 'flex', gap: '13px' }}>
-                                    <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                        {isLike ? (<FontAwesomeIcon style={{ color: 'red', cursor: 'pointer' }} icon={solidHeart} onClick={handleLikePost} />) : (
-                                            <FontAwesomeIcon style={{ cursor: 'pointer' }} icon={faHeart} onClick={handleLikePost} />
-
-                                        )}
-                                    </div>
-                                    <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-                                        <FontAwesomeIcon icon={regularComment} flip="horizontal" style={{ cursor: 'pointer' }} onClick={handleCommentPost} />
-                                    </div>
-                                    <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-                                        <FontAwesomeIcon icon={faShare} style={{ cursor: 'pointer' }} onClick={handleSharePost} />
-                                    </div>
-                                </div>
-                                <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-                                    <FontAwesomeIcon icon={faBookmark} style={{ cursor: 'pointer' }} />
-                                </div>
-                            </WrapperIcon>
-                            <div style={{ paddingTop: '10px' }}>
-                                {formattedTime}
-                            </div>
-                        </WrapperIconModal>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'center', marginTop: '10px', marginLeft: '10px' }}>
-                            <div>
-                                <FontAwesomeIcon icon={faFaceSmile} size='2x' />
-                            </div>
-                            <input value={comment} onChange={(e) => setComment(e.target.value)}></input>
-
-                            <div style={{ marginRight: '10px' }}>
-                                <span style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={handlePostComment} >Đăng</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </Modal > */}
-
+                    </>
+                )}
+            </div>
         </>
     )
 }

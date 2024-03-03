@@ -59,11 +59,13 @@ export const WrapperModalRight = styled.div`
 `
 
 export const WrapperIcon = styled.div`
+padding :0 10px;
     display:flex;
     font-size:26px;
     align-items:center;
     justify-content:space-between;
     padding-top:10px;
+    border-top:1px solid #ccc;
 
 `
 export const WrapperAccount = styled.div`

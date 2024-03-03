@@ -49,3 +49,13 @@ export const getPostByUser = async (userId) => {
     const res = await axios.get(`http://localhost:3000/api/post/get-post-by-user/${userId}`);
     return res.data;
 }
+export const handleUploadMultiFiles = async (formData) => {
+    console.log(formData)
+    const res = await axios.post(`http://localhost:3000/api/post/upload-images`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    }
+    );
+    return res.data;
+}

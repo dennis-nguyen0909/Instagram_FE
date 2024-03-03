@@ -7,7 +7,7 @@ import {
 } from '@ant-design/icons';
 import axios from 'axios';
 import * as PostService from '../../service/PostService'
-import { Avatar, Badge, Button, Col, Drawer, Image, Input, Modal, Popover, Row, Space, message } from 'antd';
+import { Avatar, Badge, Button, Col, Drawer, Image, Input, Modal, Popover, Progress, Row, Space, Spin, message } from 'antd';
 import { NavDiv, WrapperContainer, WrapperDivSearch, WrapperIconPicker, WrapperSpan } from './style';
 import { useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -31,7 +31,7 @@ export const Header = () => {
     const [descPost, setDescPost] = useState('')
     const [open, setOpen] = useState(false);
     const [open2, setOpen2] = useState(false);
-    const [post, setPost] = useState()
+    const [post, setPost] = useState([])
     const [roomChats, setRoomChats] = useState([])
     const [notify, setNotify] = useState('')
     const [messageRealTime, setMessageRealTime] = useState(0)
@@ -40,6 +40,7 @@ export const Header = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [userSearch, setUserSearch] = useState([])
     const [dataSource, setDataSource] = useState([]);
+    const [selectedFiles, setSelectedFiles] = useState([])
     const handleToggleEmoji = () => {
         setDisplayEmoji(!displayEmoji)
     }
@@ -90,6 +91,15 @@ export const Header = () => {
     const handleCreateNotify = async (data) => {
         const res = await NotifyService.createNotify(data);
 
+    }
+    const location = useLocation()
+    useEffect(() => {
+        if (location.pathname === '/') {
+            handleItemClick('home')
+        }
+    }, [location])
+    const onChangeDescPost = (e) => {
+        setDescPost(e.target.value)
     }
     const searchUser = async () => {
         const filter = searchText;
@@ -169,11 +179,31 @@ export const Header = () => {
             return modalCreatePost();
         }
     }
+    console.log(post)
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    const handleImageChangeIndex = (index) => {
+        setCurrentImageIndex(index)
+    }
     const modalReviewImage = () => {
         return (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ width: '600px' }}>
-                    {post && (<Image src={post} preview={false} style={{ width: '594px', height: '594px', objectFit: 'cover' }} />)}
+                <div>
+                    <div style={{ width: '100%' }}>
+                        {post?.length > 1 ? (
+                            <div style={{ position: 'relative' }}>
+                                <Image src={post[currentImageIndex]} style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} preview={false} />
+                                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: '20px', left: '0', width: '100%', gap: '10px' }}>
+                                    {post.map((_, index) => (
+                                        <span key={index} style={{ color: index === currentImageIndex ? '#fff' : '#ccc', cursor: 'pointer', fontSize: '30px' }}
+                                            onClick={() => handleImageChangeIndex(index)}>•</span>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <Image src={post} style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} preview={false} />
+                        )}
+                    </div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: "flex-end" }} >
                     <span
@@ -184,9 +214,55 @@ export const Header = () => {
             </div>
         )
     }
+    const handleFileChange = (event) => {
+        const files = Array.from(event.target.files); // Chuyển đổi FileList thành mảng
+        setSelectedFiles([...selectedFiles, ...files]); // Thêm các file vào selectedFiles
+    }
+    const [progress, setProgress] = useState(({ started: false, pc: 0 }))
+    const [msg, setMsg] = useState('')
+    const [uploadPercent, setUploadPercent] = useState(0)
+    const [loadingUpload, setLoadingUpload] = useState(false)
+    const handleFileUpload = async () => {
+        if (!selectedFiles || selectedFiles.length === 0) {
+            setMsg("No file selected!");
+            return;
+        }
+        const formData = new FormData();
+        for (let i = 0; i < selectedFiles.length; i++) {
+            formData.append(`image`, selectedFiles[i])
+        }
+        setMsg("...Uploading....")
+        setLoadingUpload(true)
+        setProgress(pre => {
+            return { ...pre, started: true }
+        })
+        axios.post("http://localhost:8080/api/post/upload-images", formData, {
+            onUploadProgress: (progressEvent) => {
+                const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadPercent(percentage);
+                setProgress(pre => {
+                    return { ...pre, pc: progressEvent.progress * 100 }
+                })
+            },
+            headers: {
+                "Custom-Header": "value"
+            }
+        }).then((res) => {
+            setMsg("Upload successfully!!")
+            const uploadImage = res?.data.response?.data.map((item) => item.url)
+            setPost(uploadImage);
+            setLoadingUpload(false)
+            setCurrentSteps("reviewImage")
+
+        }).catch((err) => {
+            setMsg("Upload failed!!")
+            setLoadingUpload(false)
+
+        })
+    }
     const modalChooseFile = () => {
         return (
-            <LoadingComponent isLoading={isLoading}>
+            <LoadingComponent isLoading={loadingUpload}>
                 <div style={{ display: 'flex', gap: '20px', height: '500px', width: '600px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', marginBottom: '100px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -199,27 +275,48 @@ export const Header = () => {
                                 onClick={handleSelectedPic}
                                 style={{ backgroundColor: 'rgb(0,150,247)', color: '#fff', fontWeight: 'bold', marginTop: '30px' }}
                             >Chọn từ máy tính</Button>
-                            <input type='file' accept='image/*'
-                                onChange={(e) => uploadPost(e.target.files[0])}
+                            <input type='file' multiple
+                                onChange={handleFileChange}
                                 ref={postRef} style={{ display: 'none' }} />
+
+                            {selectedFiles.length > 0 &&
+                                <button style={{ marginTop: '10px' }} onClick={handleFileUpload}>Upload</button>
+                            }
+                            {/* {loadingUpload === true ? <Spin></Spin> : <></>} */}
+
+
                         </div>
                     </div>
 
                 </div>
             </LoadingComponent>
+            // <div>
+            //     <input type="file" onChange={handleFileChange} multiple />
+            //     <button onClick={handleFileUpload}>Upload</button>
+            //     {progress.started && <progress max={'100'} value={progress.pc}></progress>}
+            //     {msg && <span>{msg}</span>}
+            // </div>
         )
     }
     const modalCreatePost = () => {
         return (
             <div style={{ borderTop: '1px solid #ccc' }}>
                 <div style={{ display: 'flex', maxHeight: '700px' }}>
-                    <div style={{ height: '500px', width: '580px' }} >
+                    <div style={{ height: '594px', width: '580px' }} >
                         <div style={{ display: 'flex', alignItems: 'center', flexDirection: 'column', gap: '10px', maxWidth: '700px' }}>
-                            {/* <Button onClick={handleSelectedPic}>Chọn ảnh từ máy tính</Button> */}
-                            {post ? (<Image src={post} preview={false} style={{ width: '604px', height: '500px', marginRight: '24px', objectFit: 'cover' }} />) : <Image src={defaultPost} preview={false} />}
-                            <input type='file' accept='image/*'
-                                onChange={(e) => uploadPost(e.target.files[0])}
-                                ref={postRef} style={{ display: 'none' }} />
+                            {post?.length > 1 ? (
+                                <div style={{ position: 'relative' }}>
+                                    <Image src={post[currentImageIndex]} style={{ borderRadius: '3px' }} width={'594px'} height={'594px'} preview={false} />
+                                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: '20px', left: '0', width: '100%', gap: '10px' }}>
+                                        {post.map((_, index) => (
+                                            <span key={index} style={{ color: index === currentImageIndex ? '#fff' : '#ccc', cursor: 'pointer', fontSize: '30px' }}
+                                                onClick={() => handleImageChangeIndex(index)}>•</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <Image src={post} style={{ borderRadius: '3px' }} width={'594px'} height={'594px'} preview={false} />
+                            )}
                         </div>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', borderLeft: '1px solid #ccc', }}>
@@ -259,35 +356,6 @@ export const Header = () => {
             </div>
         )
     }
-    const uploadPost = async (pics) => {
-        if (pics.type === "image/png" || pics.type === "image/jpeg") {
-            setIsLoading(true)
-            const formData = new FormData();
-            formData.append('file', pics);
-            formData.append('upload_preset', "chat-app");
-            formData.append('cloud_name', "dxtz2g7ga");
-            axios.post('https://api.cloudinary.com/v1_1/dxtz2g7ga/image/upload', formData)
-                .then((data) => {
-
-                    setPost(data?.data.url.toString() + "");
-                    console.log(post)
-                    setCurrentSteps("reviewImage")
-                })
-                .catch((err) => {
-                    console.error('Cloudinary error', err);
-                });
-        }
-        setIsLoading(false)
-    }
-    const location = useLocation()
-    useEffect(() => {
-        if (location.pathname === '/') {
-            handleItemClick('home')
-        }
-    }, [location])
-    const onChangeDescPost = (e) => {
-        setDescPost(e.target.value)
-    }
     const getChat = async () => {
         const res = await ChatService.getChat(user?.id);
         setRoomChats(res?.response.data);
@@ -304,15 +372,7 @@ export const Header = () => {
         setOpen(false)
         setSearchText('')
     }
-    // const getAllUser = async () => {
-    //     const res = await UserService.getAllUser();
-    //     setUserSearch(res.response.data)
-    //     setDataSource(res?.response?.data.map((item) => ({ value: item.userName || item?.name, avatar: item?.avatar })))
-    // }
-    // useEffect(() => {
-    //     getAllUser();
-    // }, [])
-    console.log("user", userSearch)
+
     return (
         <WrapperContainer>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: '30px', paddingLeft: '10px' }}>
