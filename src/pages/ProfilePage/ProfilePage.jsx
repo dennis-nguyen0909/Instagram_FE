@@ -16,6 +16,7 @@ import { WrapperAvatar } from '../../pages/ProfilePage/style'
 import { useLocale } from 'antd/es/locale'
 import { ProfileComponent } from '../../component/ProfileComponent/ProfileComponent'
 import { ProfileUserComponent } from '../../component/ProfileUserComponent/ProfileUserComponent'
+import socket from '../../socket/socket'
 
 export const ProfilePage = () => {
     const dispatch = useDispatch()
@@ -25,6 +26,8 @@ export const ProfilePage = () => {
     const [avatar, setAvatar] = useState('')
     const { state } = useLocation()
     const user = useSelector((state) => state.user)
+    const [addLikes, setAddLikes] = useState([])
+    const [removeLikes, setRemoveLikes] = useState([])
     const [userDetail, setUserDetail] = useState({
         id: "",
         userName: '',
@@ -167,18 +170,35 @@ export const ProfilePage = () => {
     }
     const queryClient = useQueryClient()
     const { data: posts } = useQuery({ queryKey: ['posts'], queryFn: handleGetPost }); // Không gọi handleGetPost ngay lập tức, chỉ truyền tham chiếu của nó vào queryFn
-    // useEffect(() => {
-    //     if (userDetail?._id) {
-    //         queryClient.invalidateQueries({ queryKey: ['posts'] })
-    //     }
-    // }, [params.id])
-    console.log(userDetail?._id === user?.id)
+    useEffect(() => {
+        socket.on("like", (post) => {
+            const filterPost = post.filter((item) => item.userId === user?.id)
+            setAddLikes(filterPost)
+            console.log("like", filterPost)
 
+            setRemoveLikes('')
+        })
+        socket.on('unlike', (post) => {
+            const filterPost = post.filter((item) => item.userId === user?.id)
+            setAddLikes('')
+            setRemoveLikes(filterPost)
+            console.log("unlike", filterPost)
+        })
+    }, [])
+    let uiPost = [];
+    if (addLikes.length > 0) {
+        uiPost = addLikes;
+    } else if (removeLikes.length > 0) {
+        uiPost = removeLikes;
+    } else {
+        uiPost = posts;
+    }
+    console.log(uiPost)
     return (
         <>
             {userDetail?._id === user?.id
                 ? (
-                    <ProfileUserComponent idUser={params.id} listPosts={posts} />)
+                    <ProfileUserComponent idUser={params.id} listPosts={uiPost} />)
                 : (<ProfileComponent idUser={params.id} listPosts={posts} />)}
 
             <Drawer width={'50%'} title="Chỉnh sửa thông tin cá nhân" onClose={onClose} open={open}>

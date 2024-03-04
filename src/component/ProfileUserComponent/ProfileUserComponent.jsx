@@ -5,7 +5,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import * as UserService from '../../service/UserService'
 import * as PostService from '../../service/PostService'
 import { Avatar, Badge, Button, Card, Col, Drawer, Image, Input, Modal, Popover, Row, Select, message } from 'antd'
-
+import ReactCrop from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -26,13 +27,12 @@ import { InputNotOutline, WrapperAccount, WrapperComment, WrapperIcon } from '..
 import './style.css'
 import { CommentList } from '../CommentList/CommentList'
 import socket from '../../socket/socket'
-export const ProfileUserComponent = ({ idUser, listPost }) => {
+export const ProfileUserComponent = ({ idUser, listPosts }) => {
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const params = useParams()
     const [open, setOpen] = useState(false);
     const [avatar, setAvatar] = useState('')
-    const { state } = useLocation()
     const user = useSelector((state) => state.user)
     const [currentSteps, setCurrentSteps] = useState('posts')
     const [userDetail, setUserDetail] = useState({
@@ -78,6 +78,8 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
     const toggleModal = () => {
         setShowModal(!showModal);
     };
+
+
 
     useEffect(() => {
         getDetailUser();
@@ -174,9 +176,6 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
         const selectedFile = e.target.files[0]
         postAvatarToCloundinary(selectedFile)
     }
-    const HandleUpload = () => {
-        mutation.mutate({ id: user?.id, avatar })
-    }
     const handleChange = (value) => {
         setSex(value)
     };
@@ -217,7 +216,6 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
 
     const handleOpenPost = async (idPost) => {
         await getDetailPost(idPost);
-        // showModal()
         toggleModal();
     }
     const handleSharePost = () => {
@@ -225,9 +223,13 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
     }
     useEffect(() => {
         const checkIdExsit = postDetail?.likes.find((item) => item === user?.id);
+        console.log(checkIdExsit)
         if (checkIdExsit !== undefined) {
+            console.log("okk")
             setIsLike(true)
         } else {
+            console.log("noo")
+
             setIsLike(false)
         }
     })
@@ -239,15 +241,15 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
     }
     const handleLikePost = async () => {
         try {
-            await PostService.likePost2({ id: postDetail?._id, userId: user?.id })
-
+            const res = await PostService.likePost2({ id: postDetail?._id, userId: user?.id })
+            if (res?.response) {
+            }
         } catch (error) {
             console.log(error)
         }
-        // setLike(isLike ? like - 1 : like + 1)
         setIsLike(!isLike)
     }
-
+    console.log(isLike)
     const handleOnChangeComment = (e) => {
         setComment(e.target.value)
 
@@ -286,22 +288,36 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
             message.error('That bai');
         }
     }
-    useEffect(() => {
-        socket.on('new-comment2', (msg) => {
-            setCommentRealTime(msg)
-        })
-        socket.on('like', async (post) => {
-            console.log("like", post)
-            SetAddLikePost(post)
-            setRemoveLikePost('')
-        })
-        socket.on('unlike', async (post) => {
-            console.log("unlike", post)
-            SetAddLikePost('')
-            setRemoveLikePost(post)
-
-        })
-    }, [])
+    // useEffect(() => {
+    //     socket.on('new-comment2', (msg) => {
+    //         setCommentRealTime(msg)
+    //     })
+    //     socket.on('like', async (post) => {
+    //         post.map((item) => {
+    //             console.log(item)
+    //             const postUser = post
+    //                 .filter(item => item?.userId === user?.id)
+    //                 .sort((a, b) => {
+    //                     console.log(a.createdAt)
+    //                     // Sắp xếp các bài viết theo thời gian tạo, từ mới nhất đến cũ nhất
+    //                     return new Date(b.createdAt) - new Date(a.createdAt);
+    //                 });
+    //             if (item.userId === user?.id) {
+    //                 SetAddLikePost(postUser)
+    //                 setRemoveLikePost('')
+    //             }
+    //         })
+    //     })
+    //     socket.on('unlike', async (post) => {
+    //         post.map((item) => {
+    //             const postUser = post.filter((item) => item?.userId === user?.id).sort()
+    //             if (item.userId === user?.id) {
+    //                 SetAddLikePost('')
+    //                 setRemoveLikePost(postUser)
+    //             }
+    //         })
+    //     })
+    // }, [])
     const uiComments = commentRealTime.length > 1 ? commentRealTime : comments;
     const scrollRef = useRef();
     const commentRef = useRef(null);
@@ -317,7 +333,7 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
     } else if (removeLikePost.length > 0) {
         uiPost = removeLikePost;
     } else {
-        uiPost = posts;
+        uiPost = listPosts;
     }
     const [currentImageIndex, setCurrentImageIndex] = useState(0)
     const handleImageChangeIndex = (index) => {
@@ -327,6 +343,61 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
     const handleImageChangeIndexDetail = (index) => {
         setCurrentImageIndex(index)
     }
+    const inputRef = useRef()
+    const [selectedFile, setSelectedFile] = useState('')
+    const [isModalOpenAvatar, setIsModalOpenAvatar] = useState(false);
+    const [imageAvatar, setImageAvatar] = useState('')
+    console.log("sec", selectedFile)
+    const HandleUpload = () => {
+        mutation.mutate({ id: user?.id, avatar: imageAvatar?.url })
+    }
+    console.log("imageAvatar", imageAvatar)
+    const showModalAvatar = () => {
+        setIsModalOpenAvatar(true);
+    };
+    const handleOnChangeAvatar = () => {
+        showModalAvatar();
+    }
+    const handleOpenFile = () => {
+        if (inputRef.current && inputRef) {
+            inputRef.current.click()
+        }
+    }
+    const [msg, setMsg] = useState("")
+    const handleUploadAvatar = async () => {
+        try {
+            if (!selectedFile) {
+                setMsg("Vui lòng chọn file lại!!")
+                return;
+            }
+            const formData = new FormData();
+            formData.append("image", selectedFile)
+            setMsg("Vui lòng chờ.......")
+            const res = await PostService.handleUploadMultiFiles(formData);
+            if (res?.response?.code === 200) {
+                console.log('sssss', res?.response.data)
+                setImageAvatar(res?.response.data[0])
+                setMsg("Hoàn thành!!")
+            } else {
+                setMsg("Thất bại!!!")
+
+            }
+        } catch (error) {
+
+        }
+    }
+    const [crop, setCrop] = useState({ aspect: 16 / 9 });
+    const [image, setImage] = useState(null);
+
+    const onImageLoaded = (img) => {
+        setImage(img);
+    };
+
+    const onCropComplete = (crop) => {
+        console.log(crop);
+    };
+
+    console.log("avatar", avatar)
     return (
         <div style={{ marginBottom: '100px' }}>
             <div style={{ borderBottom: '1px solid #ccc', margin: '0 130px' }}>
@@ -334,19 +405,12 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
                     <div style={{ display: 'flex', gap: '90px' }}>
                         <WrapperAvatar >
                             {avatar ? (
-                                <img className='avt' preview={false} src={avatar} style={{
+                                <img onClick={handleOnChangeAvatar} className='avt' preview={false} src={avatar} style={{
                                     height: '180px', width: '180px', objectFit: 'cover', borderRadius: '50%'
                                 }} />
-                            ) : <Image className='avt' src={avatarDefault} preview={false} style={{
+                            ) : <Image onClick={handleOnChangeAvatar} className='avt' src={avatarDefault} preview={false} style={{
                                 height: '180px', width: '180px', objectFit: 'cover', borderRadius: '50%'
                             }} />}
-                            {/* 
-                            <Button style={{ margin: '10px 0' }} onClick={handleClickEditAvatar}>Thay đổi ảnh đại diện</Button>
-                            <input type='file'
-                                accept='image/*'
-                                ref={fileInputRef}
-                                onChange={(e) => postAvatarToCloundinary(e.target.files[0])}
-                                style={{ display: 'none' }}></input> */}
                             <FontAwesomeIcon icon={faCirclePlus} style={{ fontSize: '60px', marginTop: '30px', cursor: 'pointer' }} />
                         </WrapperAvatar>
                         <div>
@@ -406,7 +470,7 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
                 </div>
             </WrapperDivIcon>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '3px', flexWrap: 'wrap' }}>
-                {currentSteps === 'posts' && uiPost?.map((post) => (
+                {currentSteps === 'posts' && listPosts?.map((post) => (
                     <WrapperPosts key={post.id} onClick={() => handleOpenPost(post?._id)}>
                         {post?.images.length > 1 ? (
                             <div style={{ position: 'relative' }}>
@@ -645,6 +709,29 @@ export const ProfileUserComponent = ({ idUser, listPost }) => {
                     </>
                 )}
             </div>
+            <Modal open={isModalOpenAvatar} footer={null} onCancel={() => setIsModalOpenAvatar(false)}>
+                <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {imageAvatar ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', flexDirection: 'column' }}>
+                            <img src={imageAvatar?.url} style={{ width: '200px', height: '200px', objectFit: 'contain' }} />
+                            <Button onClick={HandleUpload} >Lưu</Button>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            {selectedFile ? (
+                                <Button onClick={handleUploadAvatar}>Tải lên</Button>
+                            ) : (
+                                <Button onClick={handleOpenFile}>Thay đổi ảnh đại diện</Button>
+                            )}
+                            {selectedFile && <span>{selectedFile?.name}</span>}
+                            {msg && <span>{msg}</span>}
+                        </div>
+                    )}
+                    <div>
+                    </div>
+                    <input ref={inputRef} type='file' onChange={(e) => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
+                </div>
+            </Modal >
         </div >
     )
 }
