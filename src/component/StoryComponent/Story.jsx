@@ -35,11 +35,11 @@ export const Story = ({ onlineUsers }) => {
             <div className='horizontal-scroll'>
                 <div className='btn-scroll'>
                     <LeftOutlined style={{ fontSize: '18px', padding: '3px 3px' }} onClick={() => scroll(-1)} />
-                    {/* <button onClick={() => scroll(-1)}>^</button> */}
+                    <button onClick={() => scroll(-1)}>^</button>
                 </div>
                 <div className='btn-scroll'>
                     <RightOutlined style={{ fontSize: '18px', padding: '3px 3px' }} onClick={() => scroll(1)} />
-                    {/* <button onClick={() => scroll(1)}>^</button> */}
+                    <button onClick={() => scroll(1)}>^</button>
                 </div>
                 <div className='story-container' style={{ backgroundColor: 'rgb(255,255,255,0.75)', padding: '1px' }}>
                     {allUser.map((user, index) => {

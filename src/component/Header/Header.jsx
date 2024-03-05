@@ -215,6 +215,7 @@ export const Header = () => {
         )
     }
     const handleFileChange = (event) => {
+
         const files = Array.from(event.target.files); // Chuyển đổi FileList thành mảng
         setSelectedFiles([...selectedFiles, ...files]); // Thêm các file vào selectedFiles
     }
@@ -222,43 +223,58 @@ export const Header = () => {
     const [msg, setMsg] = useState('')
     const [uploadPercent, setUploadPercent] = useState(0)
     const [loadingUpload, setLoadingUpload] = useState(false)
+    console.log(selectedFiles[0]?.type?.startsWith('video'))
     const handleFileUpload = async () => {
         if (!selectedFiles || selectedFiles.length === 0) {
             setMsg("No file selected!");
             return;
         }
-        const formData = new FormData();
-        for (let i = 0; i < selectedFiles.length; i++) {
-            formData.append(`image`, selectedFiles[i])
-        }
-        setMsg("...Uploading....")
-        setLoadingUpload(true)
-        setProgress(pre => {
-            return { ...pre, started: true }
-        })
-        axios.post("http://localhost:8080/api/post/upload-images", formData, {
-            onUploadProgress: (progressEvent) => {
-                const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                setUploadPercent(percentage);
-                setProgress(pre => {
-                    return { ...pre, pc: progressEvent.progress * 100 }
-                })
-            },
-            headers: {
-                "Custom-Header": "value"
+        if (selectedFiles[0]?.type.startsWith('video')) {
+            const formData = new FormData()
+            formData.append(`video`, selectedFiles[0])
+            setMsg("Loading....")
+            const res = await axios.post("http://localhost:8080/api/post/upload-videos", formData, {
+                headers: {
+                    "Custom-Header": "value"
+                }
+            })
+            console.log(res)
+        } else {
+            const formData = new FormData();
+            for (let i = 0; i < selectedFiles.length; i++) {
+                formData.append(`image`, selectedFiles[i])
             }
-        }).then((res) => {
-            setMsg("Upload successfully!!")
-            const uploadImage = res?.data.response?.data.map((item) => item.url)
-            setPost(uploadImage);
-            setLoadingUpload(false)
-            setCurrentSteps("reviewImage")
+            setMsg("...Uploading....")
+            setLoadingUpload(true)
+            setProgress(pre => {
+                return { ...pre, started: true }
+            })
 
-        }).catch((err) => {
-            setMsg("Upload failed!!")
-            setLoadingUpload(false)
+            axios.post("http://localhost:8080/api/post/upload-images", formData, {
+                onUploadProgress: (progressEvent) => {
+                    const percentage = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadPercent(percentage);
+                    setProgress(pre => {
+                        return { ...pre, pc: progressEvent.progress * 100 }
+                    })
+                },
+                headers: {
+                    "Custom-Header": "value"
+                }
+            }).then((res) => {
+                setMsg("Upload successfully!!")
+                const uploadImage = res?.data.response?.data.map((item) => item.url)
+                setPost(uploadImage);
+                setLoadingUpload(false)
+                setCurrentSteps("reviewImage")
 
-        })
+            }).catch((err) => {
+                setMsg("Upload failed!!")
+                setLoadingUpload(false)
+
+            })
+        }
+
     }
     const modalChooseFile = () => {
         return (
