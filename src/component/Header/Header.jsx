@@ -15,6 +15,7 @@ import defaultPost from '../../assets/images/default.png'
 import * as UserService from '../../service/UserService'
 import * as NotifyService from '../../service/NotifyService'
 import * as ChatService from '../../service/ChatService'
+import * as ReelService from '../../service/ReelService'
 import { AutoComplete } from 'antd';
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
@@ -41,6 +42,7 @@ export const Header = () => {
     const [userSearch, setUserSearch] = useState([])
     const [dataSource, setDataSource] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([])
+    const [video, setVideo] = useState('')
     const handleToggleEmoji = () => {
         setDisplayEmoji(!displayEmoji)
     }
@@ -144,20 +146,36 @@ export const Header = () => {
             setOpen2(true)
         } else if (activeItem === 'message') {
             navigate(`/direct/inbox`)
+        } else if (activeItem === 'reels') {
+            navigate('/reels');
         } else {
             navigate('/')
         }
     }, [activeItem]);
     const handleCreatePost = async () => {
-        const res = await PostService.createPost({ id: user?.id, desc: descPost, images: post })
-        if (+res.response.EC === 0) {
-            await getAllPost();
-            message.success("Create post is success!!")
-            setIsModalOpen(false);
+        if (video) {
+            const res = await ReelService.createReel({ userId: user?.id, caption: descPost, videoUrl: video })
+            if (+res.response.EC === 0) {
+                await getAllPost();
+                message.success("Create reels is success!!")
+                setIsModalOpen(false);
+
+            } else {
+                message.error("Có lỗi");
+                setIsModalOpen(true);
+            }
 
         } else {
-            message.error("Có lỗi");
-            setIsModalOpen(true);
+            const res = await PostService.createPost({ id: user?.id, desc: descPost, images: post })
+            if (+res.response.EC === 0) {
+                await getAllPost();
+                message.success("Create post is success!!")
+                setIsModalOpen(false);
+
+            } else {
+                message.error("Có lỗi");
+                setIsModalOpen(true);
+            }
         }
 
     }
@@ -179,6 +197,7 @@ export const Header = () => {
             return modalCreatePost();
         }
     }
+    console.log(post.length)
     console.log(post)
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -190,7 +209,7 @@ export const Header = () => {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <div>
                     <div style={{ width: '100%' }}>
-                        {post?.length > 1 ? (
+                        {post?.length > 1 && !video ? (
                             <div style={{ position: 'relative' }}>
                                 <Image src={post[currentImageIndex]} style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} preview={false} />
                                 <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'absolute', bottom: '20px', left: '0', width: '100%', gap: '10px' }}>
@@ -201,7 +220,15 @@ export const Header = () => {
                                 </div>
                             </div>
                         ) : (
-                            <Image src={post} style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} preview={false} />
+                            <>
+                                {video ? (
+                                    <video controls style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} autoPlay  >
+                                        <source src={video}></source>
+                                    </video>
+                                ) : (
+                                    <Image src={video ? video : post} style={{ borderRadius: '3px' }} width={'100%'} height={'468px'} preview={false} />
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
@@ -233,12 +260,23 @@ export const Header = () => {
             const formData = new FormData()
             formData.append(`video`, selectedFiles[0])
             setMsg("Loading....")
-            const res = await axios.post("http://localhost:8080/api/post/upload-videos", formData, {
+            await axios.post("http://localhost:8080/api/post/upload-videos", formData, {
                 headers: {
                     "Custom-Header": "value"
                 }
+            }).then((res) => {
+                console.log("RES", res)
+                setMsg("Upload successfully!!")
+                const uploadImage = res?.data?.response?.data?.url
+                setVideo(uploadImage);
+                setLoadingUpload(false)
+                setCurrentSteps("reviewImage")
+
+            }).catch((err) => {
+                setMsg("Upload failed!!")
+                setLoadingUpload(false)
+
             })
-            console.log(res)
         } else {
             const formData = new FormData();
             for (let i = 0; i < selectedFiles.length; i++) {
@@ -331,7 +369,15 @@ export const Header = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <Image src={post} style={{ borderRadius: '3px' }} width={'594px'} height={'594px'} preview={false} />
+                                <>
+                                    {video ? (
+                                        <video controls style={{ borderRadius: '3px' }} width={'100%'} height={'594px'} autoPlay  >
+                                            <source src={video}></source>
+                                        </video>
+                                    ) : (
+                                        <Image src={post} style={{ borderRadius: '3px' }} width={'594px'} height={'594px'} preview={false} />
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>

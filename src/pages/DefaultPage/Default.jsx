@@ -15,7 +15,7 @@ export const Default = ({ children }) => {
                 </Col>
                 {/* <Col span={14}>{children}</Col> */}
                 {/* Chỉ hiển thị Navbar nếu đường dẫn không phải là /profile */}
-                {location.pathname.startsWith('/profile/') ? (
+                {location.pathname.startsWith('/profile/') || location.pathname.startsWith('/reels') ? (
                     <>
                         <Col span={20}>{children}</Col>
                     </>

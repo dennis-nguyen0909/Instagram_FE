@@ -41,7 +41,7 @@ export default function ChatPage() {
     const handleItemClick = async (itemName) => {
         setActiveItem(itemName)
     }
-
+    console.log(chats)
     useEffect(() => {
         if (activeItem === 'home') {
             navigate('/')
@@ -53,19 +53,29 @@ export default function ChatPage() {
     const [comment, setComment] = useState('')
     const [openEmoji, setOpenEmoji] = useState(false);
 
-    useEffect(() => {
-        const getChats = async () => {
-            try {
-                const res = await ChatService.getChat(user.id);
-                setChats(res.response.data)
-            } catch (error) {
-                return error;
-            }
+    const getChats = async () => {
+        try {
+            const res = await ChatService.getChat(user?.id);
+            setChats(res.response.data)
+        } catch (error) {
+            return error;
         }
-        getChats();
-    }, [user.id])
-
+    }
     useEffect(() => {
+        getChats();
+    }, [user?.id])
+    const [abc, setAbc] = useState([])
+    const handleGetMessageAllChat = async () => {
+        const res = await Promise.all(chats?.map(async (item) => {
+            const message = await MessageService.getMessage(item._id);
+            setAbc(message?.response?.data)
+        }))
+
+        // Bây giờ allMessages chứa tất cả các tin nhắn từ tất cả các cuộc trò chuyện
+        console.log(res);
+    }
+    useEffect(() => {
+
         socket.on('new-message', (mess) => {
             dispatch(addMessage({
                 messageChat: {
@@ -119,8 +129,14 @@ export default function ChatPage() {
         if (currentChat?._id) {
             getMessages();
         }
-    }, [currentChat, messageRealTime])
+    }, [currentChat])
+    console.log(currentChat)
     const uiMessage = messageRealTime.length > 1 ? messageRealTime : messages;
+    const messageArray = uiMessage?.filter((item) => {
+        // Lọc ra các tin nhắn mà người gửi không phải là user hiện tại
+        return item?.senderId !== user?.id;
+    });
+    console.log(messageArray)
     return (
         <div style={{ display: 'flex', flexDirection: 'row', maxWidth: '100%' }}>
             <div style={{ flex: 0, display: 'flex', flexDirection: 'column', fontSize: '30px', gap: '20px', borderRight: '1px solid #ccc', height: '100vh', padding: '0 25px', position: 'fixed', zIndex: 10 }}>
@@ -164,6 +180,7 @@ export default function ChatPage() {
                 </div>
                 <div>
                     {chats?.map((chat) => {
+                        console.log("chat", chats)
                         return (
                             <div style={{ cursor: 'pointer' }} onClick={() => setCurrentChat(chat)}>
                                 <Conversation
@@ -171,7 +188,8 @@ export default function ChatPage() {
                                     uiMessage={uiMessage}
                                     key={chat?._id}
                                     data={chat}
-                                    currentUser={user} />
+                                    currentUser={user}
+                                />
                             </div>
                         )
                     })}

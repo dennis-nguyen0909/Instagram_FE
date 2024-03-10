@@ -30,8 +30,6 @@ export const ChatBox = ({ userDetail, messageArray, chatId, currentUser, current
     const [userChat, setUserChat] = useState(null)
     const user = useSelector((state) => state.user)
     const scrollRef = useRef()
-
-
     const getDetailUserById = async () => {
         const idChat = currentChat?.members?.filter((item) => item !== currentUser.id)
         const res = await UserService.getDetailUserById(idChat)

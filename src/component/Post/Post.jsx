@@ -276,7 +276,10 @@ export const Post = (props) => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <img src={images} style={{ width: '100%', height: '90vh', objectFit: 'cover', }} />
+                                                <>
+
+                                                    <img src={images} style={{ width: '100%', height: '90vh', objectFit: 'cover', }} />
+                                                </>
                                             )}
                                         </Col>
                                         <Col span={10}>

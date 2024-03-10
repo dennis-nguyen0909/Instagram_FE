@@ -5,6 +5,7 @@ import { HomePage } from "../pages/HomePage/HomePage";
 import { LoginPage } from "../pages/LoginPage/LoginPage";
 import { ProfilePage } from "../pages/ProfilePage/ProfilePage";
 import { ProfileUserOther } from "../pages/ProfileUserOther/ProfilePage";
+import { ReelPage } from "../pages/ReelPage/ReelPage";
 import { SignUpPage } from "../pages/SignUpPage/SignUpPage";
 
 
@@ -17,6 +18,11 @@ export const routes = [
     {
         path: '/profile/:id',
         page: ProfilePage,
+        isShowHeader: true,
+    },
+    {
+        path: '/reels',
+        page: ReelPage,
         isShowHeader: true,
     },
     {
