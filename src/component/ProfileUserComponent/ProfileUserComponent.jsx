@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -26,9 +26,10 @@ import ModalComponent from '../ModalComponent/ModalComponent'
 import { InputNotOutline, WrapperAccount, WrapperComment, WrapperIcon } from '../Post/style'
 import './style.css'
 import { CommentList } from '../CommentList/CommentList'
-import socket from '../../socket/socket'
+import { SocketContext } from '../../context/socketContext'
 export const ProfileUserComponent = ({ idUser, listPosts }) => {
     const dispatch = useDispatch()
+    const socket = useContext(SocketContext)
     const navigate = useNavigate()
     const params = useParams()
     const [open, setOpen] = useState(false);
@@ -79,7 +80,7 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
         setShowModal(!showModal);
     };
 
-
+    console.log(userDetail)
 
     useEffect(() => {
         getDetailUser();
@@ -223,13 +224,9 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
     }
     useEffect(() => {
         const checkIdExsit = postDetail?.likes.find((item) => item === user?.id);
-        console.log(checkIdExsit)
         if (checkIdExsit !== undefined) {
-            console.log("okk")
             setIsLike(true)
         } else {
-            console.log("noo")
-
             setIsLike(false)
         }
     })
@@ -249,7 +246,6 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
         }
         setIsLike(!isLike)
     }
-    console.log(isLike)
     const handleOnChangeComment = (e) => {
         setComment(e.target.value)
 
@@ -288,36 +284,6 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
             message.error('That bai');
         }
     }
-    // useEffect(() => {
-    //     socket.on('new-comment2', (msg) => {
-    //         setCommentRealTime(msg)
-    //     })
-    //     socket.on('like', async (post) => {
-    //         post.map((item) => {
-    //             console.log(item)
-    //             const postUser = post
-    //                 .filter(item => item?.userId === user?.id)
-    //                 .sort((a, b) => {
-    //                     console.log(a.createdAt)
-    //                     // Sắp xếp các bài viết theo thời gian tạo, từ mới nhất đến cũ nhất
-    //                     return new Date(b.createdAt) - new Date(a.createdAt);
-    //                 });
-    //             if (item.userId === user?.id) {
-    //                 SetAddLikePost(postUser)
-    //                 setRemoveLikePost('')
-    //             }
-    //         })
-    //     })
-    //     socket.on('unlike', async (post) => {
-    //         post.map((item) => {
-    //             const postUser = post.filter((item) => item?.userId === user?.id).sort()
-    //             if (item.userId === user?.id) {
-    //                 SetAddLikePost('')
-    //                 setRemoveLikePost(postUser)
-    //             }
-    //         })
-    //     })
-    // }, [])
     const uiComments = commentRealTime.length > 1 ? commentRealTime : comments;
     const scrollRef = useRef();
     const commentRef = useRef(null);
@@ -347,11 +313,9 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
     const [selectedFile, setSelectedFile] = useState('')
     const [isModalOpenAvatar, setIsModalOpenAvatar] = useState(false);
     const [imageAvatar, setImageAvatar] = useState('')
-    console.log("sec", selectedFile)
     const HandleUpload = () => {
         mutation.mutate({ id: user?.id, avatar: imageAvatar?.url })
     }
-    console.log("imageAvatar", imageAvatar)
     const showModalAvatar = () => {
         setIsModalOpenAvatar(true);
     };
@@ -375,7 +339,6 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
             setMsg("Vui lòng chờ.......")
             const res = await PostService.handleUploadMultiFiles(formData);
             if (res?.response?.code === 200) {
-                console.log('sssss', res?.response.data)
                 setImageAvatar(res?.response.data[0])
                 setMsg("Hoàn thành!!")
             } else {
@@ -397,7 +360,6 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
         console.log(crop);
     };
 
-    console.log("avatar", avatar)
     return (
         <div style={{ marginBottom: '100px' }}>
             <div style={{ borderBottom: '1px solid #ccc', margin: '0 130px' }}>

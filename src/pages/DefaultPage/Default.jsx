@@ -6,7 +6,6 @@ import { useLocation, useParams } from 'react-router-dom';
 export const Default = ({ children }) => {
     const params = useParams()
     const location = useLocation(); // Lấy location hiện tại
-    console.log('location', location)
     return (
         <div >
             <Row>

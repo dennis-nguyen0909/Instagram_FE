@@ -9,20 +9,9 @@ import { updateUser, resetUser } from './redux/slides/userSlice';
 import * as UserService from '../src/service/UserService';
 import { jwtDecode } from 'jwt-decode';
 import { isJsonString } from "./untils";
-import io from 'socket.io-client'
-import { connectSocket, disconnectSocket } from './redux/slides/socketSlice';
-const socket = io('/', { reconnection: true })
 function App() {
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(true); // Bắt đầu với isLoading là true
-  const socket = useSelector(state => state.socket)
-  useEffect(() => {
-    // Khi component được mount, kết nối socket
-    dispatch(connectSocket());
-
-    // Return cleanup function để ngắt kết nối socket khi component unmount
-    return () => dispatch(disconnectSocket());
-  }, [dispatch]);
   useEffect(() => {
     const { storageData, decoded } = handleDecoded();
     if (decoded?.id) {

@@ -1,17 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Story } from '../../component/StoryComponent/Story'
 import { Post } from '../../component/Post/Post'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import Cookies from 'js-cookie'
 import * as PostService from '../../service/PostService'
-import socket from '../../socket/socket'
 import * as NotifyService from '../../service/NotifyService'
 import * as ChatService from '../../service/ChatService'
 import LoadingComponent from '../../component/LoadingComponent/LoadingComponent'
 import { message } from 'antd'
+import { SocketContext } from '../../context/socketContext'
 
 export const HomePage = () => {
+    const socket = useContext(SocketContext)
+
     const navigate = useNavigate()
     const user = useSelector((state) => state.user)
     const [statePost, setStatePost] = useState([]);
@@ -70,8 +72,6 @@ export const HomePage = () => {
     useEffect(() => {
         getChat()
     }, [])
-    // console.log('chats', roomChats.map((item) => item?._id?.includes(message?.idChat)))
-    // console.log("checkk", roomChats.map((item) => item?.includes(message.idChat)))
     useEffect(() => {
         socket.on('like', async (post) => {
             // console.log("like", post)
@@ -84,7 +84,8 @@ export const HomePage = () => {
             setRemoveLikePost(post)
 
         })
-        socket.emit('addNewUser', user?.id);
+        console.log(user)
+        socket.emit('addNewUser', user?.userName || user?.name);
         socket.on('onlineUsers', (res) => {
             setOnlineUsers(res)
 
@@ -92,11 +93,16 @@ export const HomePage = () => {
         socket.on('notify-like', async (findPost, user) => {
             await addNotify({ ownerId: findPost?.userId, postId: findPost?._id, userId: user?._id, avatar: user?.avatar, message: "Like" })
         })
-        socket.on('new-notify-like', (data) => {
-            if (data?.ownerId._id === user?.id) {
-                setNotifyRealTime(data)
-            }
-        });
+        // socket.on('new-notify-like', (data) => {
+        //     const sender = data?.userId.userName;
+        //     const receiver = data?.ownerId._id;
+        //     // const receiver = data?.ownerId.userName;
+        //     if (receiver === user?.id) {
+        //         alert(`${sender} vừa thích bài viết của bạn`)
+        //     }
+        //     const message = data?.message
+        //     socket.emit("notifications", { sender, receiver, message });
+        // });
     }, [])
 
     return (
@@ -109,6 +115,7 @@ export const HomePage = () => {
                     {uiPost?.map((post, index) => {
                         return (
                             <Post
+                                receiverName={post?.user?.userName}
                                 loading={loading}
                                 key={index}
                                 desc={post?.desc}

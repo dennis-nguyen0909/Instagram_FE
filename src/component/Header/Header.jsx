@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import {
     HomeOutlined, HomeFilled,
     MenuOutlined, SearchOutlined,
@@ -8,8 +8,8 @@ import {
 import axios from 'axios';
 import * as PostService from '../../service/PostService'
 import { Avatar, Badge, Button, Col, Drawer, Image, Input, Modal, Popover, Progress, Row, Space, Spin, message } from 'antd';
-import { NavDiv, WrapperContainer, WrapperDivSearch, WrapperIconPicker, WrapperSpan } from './style';
-import { useSelector } from 'react-redux';
+import { NavDiv, WrapperContainer, WrapperDivSearch, WrapperIconPicker, WrapperNotify, WrapperSpan } from './style';
+import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import defaultPost from '../../assets/images/default.png'
 import * as UserService from '../../service/UserService'
@@ -19,16 +19,20 @@ import * as ReelService from '../../service/ReelService'
 import { AutoComplete } from 'antd';
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
-import socket from '../../socket/socket'
 import { faFaceSmile, faImage } from '@fortawesome/free-regular-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { InputNotOutline } from '../Post/style';
 import LoadingComponent from '../LoadingComponent/LoadingComponent';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { addNotify } from '../../redux/slides/notifySlice';
+import { SocketContext } from '../../context/socketContext';
+
 
 export const Header = () => {
+    const socket = useContext(SocketContext)
     const user = useSelector((state) => state.user)
     const [searchText, setSearchText] = useState('')
-    const postRef = useRef(null)
+    const postRef = useRef()
     const [descPost, setDescPost] = useState('')
     const [open, setOpen] = useState(false);
     const [open2, setOpen2] = useState(false);
@@ -41,8 +45,11 @@ export const Header = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [userSearch, setUserSearch] = useState([])
     const [dataSource, setDataSource] = useState([]);
+    const [notifications, setNotifications] = useState([])
     const [selectedFiles, setSelectedFiles] = useState([])
     const [video, setVideo] = useState('')
+    const dispatch = useDispatch()
+
     const handleToggleEmoji = () => {
         setDisplayEmoji(!displayEmoji)
     }
@@ -56,6 +63,27 @@ export const Header = () => {
     const handleEmojiClick = (e) => {
         setDescPost(descPost + e.native);
     };
+    const getAllReels = async () => {
+        const res = await ReelService.getAllReel();
+        return res?.response.data
+    }
+    const query = useQueryClient()
+    const { data: reels2, refetch } = useQuery({ queryKey: ['reels'], queryFn: getAllReels })
+    useEffect(() => {
+        refetch();
+    }, [refetch])
+    const getAllNotificationById = async () => {
+        const res = await NotifyService.getAllNotifyById(user?.id);
+        if (res?.response?.EC === 0) {
+            setNotifications(res?.response?.data)
+        } else {
+            console.log('Error')
+        }
+    }
+    console.log("notifications", notifications)
+    useEffect(() => {
+        getAllNotificationById();
+    }, [])
     const ComponentEmoji = () => {
         return (
             <>
@@ -73,6 +101,7 @@ export const Header = () => {
     };
     const onClose2 = () => {
         setOpen2(false);
+        setNotifyRealTime([])
     };
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,7 +142,6 @@ export const Header = () => {
 
             // Kiểm tra xem trong danh sách kết quả tìm kiếm có người dùng nào khác với người dùng hiện tại không
             const userExists = users.some(item => item._id !== user?.id);
-            console.log(userExists)
             if (userExists) {
                 setUserSearch(users);
             }
@@ -124,12 +152,22 @@ export const Header = () => {
     const handleSearch = async (value) => {
         await searchUser();
     }
+    const [notifyRealTime, setNotifyRealTime] = useState([])
     useEffect(() => {
         socket.on('new-message', newMessage => {
             setMessageRealTime((prev) => prev + 1)
         })
+        socket.on('new-notify-like', (data) => {
+            const sender = data?.userId.userName;
+            const receiver = data?.ownerId.userName;
+            const message = data?.message
+            socket.emit("notifications", { sender, receiver, message });
+        });
+        socket.on('getNotifications', (data) => {
+            message.success(data.message)
+            setNotifyRealTime((prev) => [...prev, data])
+        })
     }, [])
-
     const handleItemClick = (itemName) => {
         setActiveItem(itemName);
     };
@@ -159,6 +197,7 @@ export const Header = () => {
                 await getAllPost();
                 message.success("Create reels is success!!")
                 setIsModalOpen(false);
+                refetch();
 
             } else {
                 message.error("Có lỗi");
@@ -181,6 +220,8 @@ export const Header = () => {
     }
     const handleSelectedPic = () => {
         if (postRef.current && postRef) {
+            alert('ok')
+            console.log(postRef.current.click())
             postRef.current.click()
         }
     }
@@ -197,10 +238,7 @@ export const Header = () => {
             return modalCreatePost();
         }
     }
-    console.log(post.length)
-    console.log(post)
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
     const handleImageChangeIndex = (index) => {
         setCurrentImageIndex(index)
     }
@@ -250,7 +288,6 @@ export const Header = () => {
     const [msg, setMsg] = useState('')
     const [uploadPercent, setUploadPercent] = useState(0)
     const [loadingUpload, setLoadingUpload] = useState(false)
-    console.log(selectedFiles[0]?.type?.startsWith('video'))
     const handleFileUpload = async () => {
         if (!selectedFiles || selectedFiles.length === 0) {
             setMsg("No file selected!");
@@ -434,7 +471,12 @@ export const Header = () => {
         setOpen(false)
         setSearchText('')
     }
-
+    const displayNotify = ({ sender, message }) => {
+        console.log("sender", sender, message)
+        return (
+            <span>{`${sender}+ ${message}`}</span>
+        )
+    }
     return (
         <WrapperContainer>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: '30px', paddingLeft: '10px' }}>
@@ -486,7 +528,7 @@ export const Header = () => {
                 </div>
                 <div onClick={() => handleItemClick('notify')} className={activeItem === 'notify' ? 'active' : ''} >
                     {activeItem === 'notify' ? <HeartFilled /> : <HeartOutlined />}
-                    <p>Thông báo</p>
+                    <p>{notifyRealTime.length}Thông báo</p>
                 </div>
                 <div onClick={() => handleItemClick('create')} className={activeItem === 'create' ? 'active' : ''}>
                     {activeItem === 'create' ? <PlusSquareFilled /> : <PlusSquareOutlined />}
@@ -573,20 +615,9 @@ export const Header = () => {
             </Modal>
             <Drawer style={{ marginLeft: '180px' }} title="Thông báo" placement='left' onClose={onClose2} open={open2}>
                 <h1 style={{ fontSize: '16px' }}>Hôm nay</h1>
-                {/* <div style={{ borderTop: '1px solid #ccc' }}>
-                    {notifyMessage?.data.map((notify) => {
-
-                        // Kiểm tra xem thông báo có liên quan đến bài viết của người dùng hiện tại không
-                        if (notify.userId) {
-                            return (
-                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                    <img src={notify?.avatar} style={{ borderRadius: '50%', width: '40px', height: '40px' }} />
-                                    <p>{notify.message}</p>
-                                </div>
-                            );
-                        }
-                    })}
-                </div> */}
+                <div style={{ borderTop: '1px solid #ccc' }}>
+                    {notifyRealTime?.map((notify) => displayNotify(notify))}
+                </div>
             </Drawer>
 
 

@@ -62,3 +62,18 @@ export const WrapperDivSearch = styled.div`
         }
     }
 `
+
+export const WrapperNotify = styled.div`
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:10px 10px;
+    cursor:pointer;
+
+    &:hover{
+        background-color:#ccc;
+        border-radius:10px;
+        cursor:pointer;
+        
+    }
+`

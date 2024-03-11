@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { DownOutlined, HeartOutlined } from '@ant-design/icons'
@@ -10,7 +10,7 @@ import avatarDefault from '../../assets/images/avatar.jpeg'
 import * as PostService from '../../service/PostService'
 import * as ChatService from '../../service/ChatService'
 import { WrapperAvatar } from '../../pages/ProfilePage/style'
-import socket from '../../socket/socket'
+import { SocketContext } from '../../context/socketContext'
 export const ProfileComponent = ({ idUser, listPosts }) => {
     const [userDetail, setUserDetail] = useState(null);
     // const [posts, setPosts] = useState(listPosts)
@@ -20,7 +20,8 @@ export const ProfileComponent = ({ idUser, listPosts }) => {
     const user = useSelector((state) => state.user)
     const query = useQueryClient();
     const params = useParams()
-    console.log("listPosts", listPosts)
+    const socket = useContext(SocketContext)
+
     const getDetailUserById = async () => {
         try {
             const res = await UserService.getDetailUserById(idUser);

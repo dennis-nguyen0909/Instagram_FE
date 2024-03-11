@@ -11,3 +11,11 @@ export const getAllReel = async () => {
     return res.data;
 
 }
+export const handleLikeReel = async (idUser, idReel) => {
+    const res = await axios.put(`http://localhost:3000/api/reel/like/${idReel}`, { idUser });
+    return res.data;
+}
+export const handleCommentPost = async (idUser, idReel, comment) => {
+    const res = await axios.put(`http://localhost:3000/api/reel/comment/${idReel}`, { idUser, comment });
+    return res.data;
+}

@@ -22,7 +22,6 @@ export const ProfileUserOther = () => {
     }
     const query = useQueryClient();
     const { data: userDetail } = useQuery({ queryKey: ['user'], queryFn: getUserByUserName })
-    console.log("userDetail", userDetail)
     const handleFollow = async () => {
         const res = await UserService.handleFollow(userDetail._id, user?.id)
         if (res.response.code === 200) {

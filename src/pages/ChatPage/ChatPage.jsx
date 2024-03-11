@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Header } from '../../component/Header/Header'
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import * as UserService from '../../service/UserService'
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -26,9 +26,11 @@ import { ChatBox } from '../../component/ChatBox/ChatBox';
 import * as MessageService from '../../service/MessageService'
 import * as ChatService from '../../service/ChatService'
 import { Conversation } from '../../component/Conversation/Conversation';
-import socket from '../../socket/socket';
 import { addMessage } from '../../redux/slides/messageSlice';
+import { SocketContext } from '../../context/socketContext';
 export default function ChatPage() {
+    const socket = useContext(SocketContext)
+
     const dispatch = useDispatch()
     const [chats, setChats] = useState([])
     const [currentChat, setCurrentChat] = useState(null)
@@ -41,7 +43,6 @@ export default function ChatPage() {
     const handleItemClick = async (itemName) => {
         setActiveItem(itemName)
     }
-    console.log(chats)
     useEffect(() => {
         if (activeItem === 'home') {
             navigate('/')
@@ -72,7 +73,6 @@ export default function ChatPage() {
         }))
 
         // Bây giờ allMessages chứa tất cả các tin nhắn từ tất cả các cuộc trò chuyện
-        console.log(res);
     }
     useEffect(() => {
 
@@ -130,13 +130,11 @@ export default function ChatPage() {
             getMessages();
         }
     }, [currentChat])
-    console.log(currentChat)
     const uiMessage = messageRealTime.length > 1 ? messageRealTime : messages;
     const messageArray = uiMessage?.filter((item) => {
         // Lọc ra các tin nhắn mà người gửi không phải là user hiện tại
         return item?.senderId !== user?.id;
     });
-    console.log(messageArray)
     return (
         <div style={{ display: 'flex', flexDirection: 'row', maxWidth: '100%' }}>
             <div style={{ flex: 0, display: 'flex', flexDirection: 'column', fontSize: '30px', gap: '20px', borderRight: '1px solid #ccc', height: '100vh', padding: '0 25px', position: 'fixed', zIndex: 10 }}>
@@ -180,7 +178,6 @@ export default function ChatPage() {
                 </div>
                 <div>
                     {chats?.map((chat) => {
-                        console.log("chat", chats)
                         return (
                             <div style={{ cursor: 'pointer' }} onClick={() => setCurrentChat(chat)}>
                                 <Conversation

@@ -1,5 +1,5 @@
 import { Avatar, Button, Col, Image, Input, Modal, Popover, Row, message } from 'antd'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import avt from '../../../src/assets/images/slider2.jpg'
 import Slider from "react-slick";
 import { AvatarComponent } from '../AvartarComponent/AvatarComponent';
@@ -20,15 +20,15 @@ import { CommentList } from '../CommentList/CommentList';
 import data from '@emoji-mart/data'
 import Picker from '@emoji-mart/react'
 import { useNavigate } from 'react-router-dom';
-import socket from '../../socket/socket';
-
-
+import { SocketContext } from '../../context/socketContext';
 export const Post = (props) => {
     const { images, desc, likes, userName,
         avatar, userId, postId,
-        postUpdated, postCreated, likesId, commentPost, loading } = props
+        postUpdated, postCreated, likesId, commentPost, loading, receiverName } = props
     // Config dateTime
     register('vi', vi);
+    const socket = useContext(SocketContext)
+
     const formattedTime = format(postCreated, 'vi');
     const user = useSelector((state) => state.user)
     const [like, setLike] = useState(likes)
@@ -64,11 +64,19 @@ export const Post = (props) => {
         } else {
             setIsLike(false)
         }
-    })
+    }, [likesId])
     const handleLikePost = async () => {
         try {
-            await PostService.likePost2({ id: postId, userId: user?.id })
-
+            const res = await PostService.likePost2({ id: postId, userId: user?.id })
+            if (res.response?.code === 200) {
+                socket.emit("notifications", {
+                    sender: user?.userName,
+                    receiver: receiverName,
+                    message: `${user?.userName} đã thích bài viết  của bạn`
+                })
+            } else {
+                return;
+            }
         } catch (error) {
             console.log(error)
         }
@@ -222,7 +230,6 @@ export const Post = (props) => {
                         <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                             {isLike ? (<FontAwesomeIcon style={{ color: 'red', cursor: 'pointer' }} icon={solidHeart} onClick={handleLikePost} />) : (
                                 <FontAwesomeIcon style={{ cursor: 'pointer' }} icon={faHeart} onClick={handleLikePost} />
-
                             )}
                         </div>
                         <div style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>

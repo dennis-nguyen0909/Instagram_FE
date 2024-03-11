@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -16,9 +16,11 @@ import { WrapperAvatar } from '../../pages/ProfilePage/style'
 import { useLocale } from 'antd/es/locale'
 import { ProfileComponent } from '../../component/ProfileComponent/ProfileComponent'
 import { ProfileUserComponent } from '../../component/ProfileUserComponent/ProfileUserComponent'
-import socket from '../../socket/socket'
+import { SocketContext } from '../../context/socketContext'
+
 
 export const ProfilePage = () => {
+    const socket = useContext(SocketContext)
     const dispatch = useDispatch()
     const navigate = useNavigate()
     const params = useParams()

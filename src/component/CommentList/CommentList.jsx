@@ -6,8 +6,8 @@ import { AvatarComponent } from '../AvartarComponent/AvatarComponent';
 import { WrapperAccount } from '../Post/style';
 import { PlusCircleOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-export const CommentList = ({ comments, onWheel, ref }) => {
-    const [visibleComments, setVisibleComments] = useState(10);
+export const CommentList = ({ comments, onWheel, ref, visibleComment }) => {
+    const [visibleComments, setVisibleComments] = useState(visibleComment || 10);
     const navigate = useNavigate()
     const handleLoadMore = () => {
         setVisibleComments(visibleComments + 10); // Tăng số lượng phần tử hiển thị lên 10
@@ -15,7 +15,7 @@ export const CommentList = ({ comments, onWheel, ref }) => {
     const handleNavigateProfile = (userName) => {
         navigate(`/profile-user/${userName}`)
     }
-
+    console.log(comments)
 
     return (
         <>

@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComment as regularComment, faFaceSmile, } from '@fortawesome/free-regular-svg-icons';
 import Picker from '@emoji-mart/react'
@@ -19,7 +19,7 @@ import { format } from 'timeago.js';
 
 import io from 'socket.io-client'
 import { MessageComponent } from '../MessageComponent/MessageComponent';
-import socket from '../../socket/socket';
+import { SocketContext } from '../../context/socketContext';
 export const ChatBox = ({ userDetail, messageArray, chatId, currentUser, currentChat }) => {
 
     const [displayEmoji, setDisplayEmoji] = useState(false)
@@ -30,6 +30,7 @@ export const ChatBox = ({ userDetail, messageArray, chatId, currentUser, current
     const [userChat, setUserChat] = useState(null)
     const user = useSelector((state) => state.user)
     const scrollRef = useRef()
+    const socket = useContext(SocketContext)
     const getDetailUserById = async () => {
         const idChat = currentChat?.members?.filter((item) => item !== currentUser.id)
         const res = await UserService.getDetailUserById(idChat)

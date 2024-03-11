@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import * as ReelService from '../../service/ReelService'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faComment as regularComment, faHeart, faBookmark, faFaceSmile } from '@fortawesome/free-regular-svg-icons';
@@ -6,19 +6,40 @@ import { faComment as regularComment, faHeart, faBookmark, faFaceSmile } from '@
 import { faMusic, faVolumeOff, faVolumeXmark, faHeart as solidHeart, faComment, faShare, faBookBookmark, faEllipsis, } from '@fortawesome/free-solid-svg-icons'
 import { Avatar, Button } from 'antd'
 import { Reel } from '../../component/Reel/Reel';
+import { useQuery } from '@tanstack/react-query';
+import { SocketContext } from '../../context/socketContext';
 export const ReelPage = () => {
+    const socket = useContext(SocketContext)
     const [reels, setReels] = useState([])
+    const [likeReelTime, setLikeReelTime] = useState([])
+    const [unLikeReelTime, setUnLikeReelTime] = useState([])
     const getAllReels = async () => {
         const res = await ReelService.getAllReel();
+        return res?.response.data
         setReels(res?.response?.data)
     }
+
     useEffect(() => {
         getAllReels();
     }, [])
-
+    const { data: reels2 } = useQuery({ queryKey: ['reels'], queryFn: getAllReels })
+    console.log("resss", reels2)
+    useEffect(() => {
+        socket.on('like-reel', (msg) => {
+            setLikeReelTime(msg)
+            setUnLikeReelTime('')
+            console.log("like", msg)
+        })
+        socket.on('unlike-reel', (msg) => {
+            console.log("unlike", msg)
+            setLikeReelTime('')
+            setUnLikeReelTime(msg)
+        })
+    }, [])
+    const uiReels = likeReelTime.length > 0 ? likeReelTime : unLikeReelTime?.length > 0 ? unLikeReelTime : reels2
     return (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '30px', flexDirection: 'column', gap: '20px' }}>
-            {reels.map((reel, index) => {
+            {uiReels?.map((reel, index) => {
                 return (
                     // <div style={{ display: 'flex', alignItems: 'center', }}>
                     //     < div
@@ -93,8 +114,9 @@ export const ReelPage = () => {
                     //     </div>
                     // </div>
                     <Reel
-                        comments={reel.comments}
-                        likes={reel.likes}
+                        ownUser={reel?.userId?._id}
+                        commentsReel={reel?.comments}
+                        likes={reel?.likes}
                         key={index}
                         reel={reel}
                     />
