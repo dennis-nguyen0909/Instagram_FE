@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import * as UserService from '../../service/UserService'
 import * as PostService from '../../service/PostService'
+
 import { Avatar, Badge, Button, Card, Col, Drawer, Image, Input, Modal, Popover, Row, Select, message } from 'antd'
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -18,7 +19,7 @@ import axios from 'axios'
 import { useMutationHook } from '../../hook/useMutationHook'
 import { WrapperAvatar } from '../../pages/ProfilePage/style'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCirclePlus, faEllipsis, faFaceSmile, faGear, faTableCells, faUserTag } from '@fortawesome/free-solid-svg-icons';
+import { faCirclePlus, faEllipsis, faFaceSmile, faGear, faTableCells, faUserTag, faVolumeOff, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark, faPlusCircle } from '@fortawesome/free-regular-svg-icons';
 import { WrapperDivIcon, WrapperPosts } from './style'
 import { faHeart, faComment, faShare } from '@fortawesome/free-solid-svg-icons'
@@ -27,7 +28,8 @@ import { InputNotOutline, WrapperAccount, WrapperComment, WrapperIcon } from '..
 import './style.css'
 import { CommentList } from '../CommentList/CommentList'
 import { SocketContext } from '../../context/socketContext'
-export const ProfileUserComponent = ({ idUser, listPosts }) => {
+import { ReelUser } from './ReelUser'
+export const ProfileUserComponent = ({ idUser, listPosts, listReels }) => {
     const dispatch = useDispatch()
     const socket = useContext(SocketContext)
     const navigate = useNavigate()
@@ -56,6 +58,8 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
         posts: [],
     })
     const [comments, setComments] = useState([])
+    const videoRef = useRef();
+    const [muted, setMuted] = useState(false)
     const [commentRealTime, setCommentRealTime] = useState([])
     const [like, setLike] = useState([])
     const [isLike, setIsLike] = useState(false)
@@ -79,8 +83,6 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
     const toggleModal = () => {
         setShowModal(!showModal);
     };
-
-    console.log(userDetail)
 
     useEffect(() => {
         getDetailUser();
@@ -130,6 +132,8 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
             setCurrentSteps(item)
         } else if (item === 'tag') {
             setCurrentSteps(item)
+        } else if (item === "reels") {
+            setCurrentSteps(item);
         }
     }
     const handleClickEditAvatar = () => {
@@ -359,7 +363,20 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
     const onCropComplete = (crop) => {
         console.log(crop);
     };
-
+    const handleAutoPlayVideo = () => {
+        if (videoRef && videoRef.current) {
+            videoRef.current.currentTime = 0;
+            videoRef.current.play();
+        }
+    }
+    const toggleMutedVideo = () => {
+        console.log("okk")
+        if (videoRef && videoRef.current) {
+            videoRef.current.muted = !videoRef.current.muted;
+            setMuted(!videoRef.current.muted);
+        }
+    }
+    console.log(muted)
     return (
         <div style={{ marginBottom: '100px' }}>
             <div style={{ borderBottom: '1px solid #ccc', margin: '0 130px' }}>
@@ -423,6 +440,13 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
                     <FontAwesomeIcon icon={faTableCells} />
                     <span>Bài viết</span>
                 </div>
+                {userDetail?.reels?.length > 0 ? (
+                    <div onClick={() => handleItemClick('reels')} className={currentSteps === 'reels' ? 'active' : ''}>
+                        <FontAwesomeIcon icon={faBookmark} />
+                        Reels</div>
+                ) : (
+                    <></>
+                )}
                 <div onClick={() => handleItemClick('bookMark')} className={currentSteps === 'bookMark' ? 'active' : ''}>
                     <FontAwesomeIcon icon={faBookmark} />
                     Đã lưu</div>
@@ -432,8 +456,8 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
                 </div>
             </WrapperDivIcon>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '3px', flexWrap: 'wrap' }}>
-                {currentSteps === 'posts' && listPosts?.map((post) => (
-                    <WrapperPosts key={post.id} onClick={() => handleOpenPost(post?._id)}>
+                {currentSteps === 'posts' && listPosts?.map((post, index) => (
+                    <WrapperPosts key={index} onClick={() => handleOpenPost(post?._id)}>
                         {post?.images.length > 1 ? (
                             <div style={{ position: 'relative' }}>
                                 <img
@@ -472,6 +496,14 @@ export const ProfileUserComponent = ({ idUser, listPosts }) => {
                         </div>
                     </WrapperPosts>
                 ))}
+                {currentSteps === 'reels' && listReels.map((reel, index) => {
+                    return (
+                        <ReelUser
+                            key={index}
+                            reel={reel} />
+                    )
+                })
+                }
             </div>
             <Drawer width={'50%'} title="Chỉnh sửa thông tin cá nhân" onClose={onClose} open={open}>
                 <div>

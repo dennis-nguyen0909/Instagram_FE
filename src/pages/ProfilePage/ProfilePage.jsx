@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import * as UserService from '../../service/UserService'
 import * as PostService from '../../service/PostService'
+import * as ReelService from '../../service/ReelService'
 import { Avatar, Badge, Button, Card, Drawer, Image, Input, Select, message } from 'antd'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import avatarDefault from '../../assets/images/avatar.jpeg'
@@ -170,21 +171,17 @@ export const ProfilePage = () => {
         const res = await PostService.getPostByUser(params.id);
         return res.response.data
     }
-    const queryClient = useQueryClient()
     const { data: posts } = useQuery({ queryKey: ['posts'], queryFn: handleGetPost }); // Không gọi handleGetPost ngay lập tức, chỉ truyền tham chiếu của nó vào queryFn
     useEffect(() => {
         socket.on("like", (post) => {
             const filterPost = post.filter((item) => item.userId === user?.id)
             setAddLikes(filterPost)
-            console.log("like", filterPost)
-
             setRemoveLikes('')
         })
         socket.on('unlike', (post) => {
             const filterPost = post.filter((item) => item.userId === user?.id)
             setAddLikes('')
             setRemoveLikes(filterPost)
-            console.log("unlike", filterPost)
         })
     }, [])
     let uiPost = [];
@@ -195,12 +192,19 @@ export const ProfilePage = () => {
     } else {
         uiPost = posts;
     }
-    console.log(uiPost)
+    const [reels, setReels] = useState([])
+    const handleGetReelByUser = async () => {
+        const res = await ReelService.handleGetReelByUser(user?.id);
+        setReels(res?.response?.data)
+    }
+    useEffect(() => {
+        handleGetReelByUser();
+    }, [])
     return (
         <>
             {userDetail?._id === user?.id
                 ? (
-                    <ProfileUserComponent idUser={params.id} listPosts={uiPost} />)
+                    <ProfileUserComponent idUser={params.id} listPosts={uiPost} listReels={reels} />)
                 : (<ProfileComponent idUser={params.id} listPosts={posts} />)}
 
             <Drawer width={'50%'} title="Chỉnh sửa thông tin cá nhân" onClose={onClose} open={open}>

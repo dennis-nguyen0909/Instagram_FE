@@ -16,7 +16,6 @@ import { ListCommentReel } from './ListCommentReel';
 import { SocketContext } from '../../context/socketContext';
 export const Reel = ({ reel, likes, ownUser, commentsReel }) => {
     const socket = useContext(SocketContext)
-
     const [muted, setMuted] = useState(false)
     const [isOwnReel, setIsOwnReel] = useState(false)
     const [isLike, setIsLike] = useState(false)
@@ -145,12 +144,6 @@ export const Reel = ({ reel, likes, ownUser, commentsReel }) => {
             </div >
         )
     }
-    useEffect(() => {
-        if (videoRef.current) {
-            if (videoRef.current) {
-            }
-        }
-    }, [videoRef.current])
     const handleLikeReel = async () => {
         const res = await ReelService.handleLikeReel(user?.id, reel?._id);
         if (res?.response.code === 200) {

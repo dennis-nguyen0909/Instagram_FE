@@ -19,3 +19,8 @@ export const handleCommentPost = async (idUser, idReel, comment) => {
     const res = await axios.put(`http://localhost:3000/api/reel/comment/${idReel}`, { idUser, comment });
     return res.data;
 }
+export const handleGetReelByUser = async (idUser) => {
+    console.log(idUser)
+    const res = await axios.get(`http://localhost:3000/api/reel/get-reel-by-user/${idUser}`);
+    return res.data;
+}
