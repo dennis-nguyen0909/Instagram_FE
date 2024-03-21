@@ -72,6 +72,8 @@ export const ProfileUserComponent = ({ idUser, listPosts, listReels }) => {
     const [sex, setSex] = useState('')
     const [desc, setDesc] = useState('')
     const query = useQueryClient()
+    const inputRefStory = useRef()
+    const [isModelOpenStory,setIsModelOpenStory]=useState(false)
 
 
     const getDetailUser = async () => {
@@ -370,13 +372,19 @@ export const ProfileUserComponent = ({ idUser, listPosts, listReels }) => {
         }
     }
     const toggleMutedVideo = () => {
-        console.log("okk")
         if (videoRef && videoRef.current) {
             videoRef.current.muted = !videoRef.current.muted;
             setMuted(!videoRef.current.muted);
         }
     }
-    console.log(muted)
+    const handleOpenModelCreateStory = ()=>{
+        setIsModelOpenStory(true)
+    }
+    const handleOpenFileChoose = ()=>{
+        if(inputRefStory&& inputRefStory.current){
+            inputRefStory.current.click()
+        }
+    }
     return (
         <div style={{ marginBottom: '100px' }}>
             <div style={{ borderBottom: '1px solid #ccc', margin: '0 130px' }}>
@@ -390,7 +398,7 @@ export const ProfileUserComponent = ({ idUser, listPosts, listReels }) => {
                             ) : <Image onClick={handleOnChangeAvatar} className='avt' src={avatarDefault} preview={false} style={{
                                 height: '180px', width: '180px', objectFit: 'cover', borderRadius: '50%'
                             }} />}
-                            <FontAwesomeIcon icon={faCirclePlus} style={{ fontSize: '60px', marginTop: '30px', cursor: 'pointer' }} />
+                            <FontAwesomeIcon icon={faCirclePlus} style={{ fontSize: '60px', marginTop: '30px', cursor: 'pointer'  }} onClick={handleOpenModelCreateStory} />
                         </WrapperAvatar>
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
@@ -724,6 +732,19 @@ export const ProfileUserComponent = ({ idUser, listPosts, listReels }) => {
                     <div>
                     </div>
                     <input ref={inputRef} type='file' onChange={(e) => setSelectedFile(e.target.files[0])} style={{ display: 'none' }} />
+                </div>
+            </Modal >
+
+            <Modal 
+            title="Tạo Story"
+            open={isModelOpenStory} 
+            footer={null}
+             onCancel={() => setIsModelOpenStory(false)}>
+                <div style={{height:'400px',width:'400px' ,justifyContent:'center',display:'flex',alignItems:'center'}}>
+                        <Button 
+                        onClick={handleOpenFileChoose}
+                        >Chọn video / ảnh</Button>
+                        <input ref={inputRefStory} type='file' style={{display:'none'}} multiple />
                 </div>
             </Modal >
         </div >

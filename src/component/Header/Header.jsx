@@ -220,8 +220,6 @@ export const Header = () => {
     }
     const handleSelectedPic = () => {
         if (postRef.current && postRef) {
-            alert('ok')
-            console.log(postRef.current.click())
             postRef.current.click()
         }
     }
