@@ -46,7 +46,8 @@ export const LoginPage = () => {
             }
             message.success("Login Success!")
         } else if (+userLogin?.data?.EC === 1) {
-            message.error("Login Error!")
+            console.log("user",userLogin)
+            message.error(`${userLogin.data.EM}`)
             return;
         }
     }, [isSuccess])

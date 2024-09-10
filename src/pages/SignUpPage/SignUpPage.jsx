@@ -42,6 +42,8 @@ export const SignUpPage = () => {
             // setRegisterSuccess(true)
             setIdUser(res.response.DT._id)
             setCurrentStep('birthday')
+        }else{
+            message.error(res.response.EM)
         }
     }
     const updateUserBirthday = async () => {
@@ -73,6 +75,7 @@ export const SignUpPage = () => {
     const handleVerifyAuth = () => {
         if (verify === verifyCode) {
             navigate('/login')
+            
         } else {
             message.success('Không chính xác')
         }

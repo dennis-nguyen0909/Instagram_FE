@@ -75,7 +75,6 @@ export default function ChatPage() {
         // Bây giờ allMessages chứa tất cả các tin nhắn từ tất cả các cuộc trò chuyện
     }
     useEffect(() => {
-
         socket.on('new-message', (mess) => {
             dispatch(addMessage({
                 messageChat: {
@@ -85,11 +84,16 @@ export default function ChatPage() {
                     createdAt: mess.createdAt,
                     id: mess._id,
                 }
-            }))
-            setMessageRealTime(mess)
-
-        })
-    }, [socket])
+            }));
+    
+            setMessageRealTime(prevMessages => [...prevMessages, mess]); // Thêm tin nhắn mới vào danh sách
+        });
+    
+        return () => {
+            socket.off('new-message'); // Cleanup để tránh đăng ký nhiều lần
+        };
+    }, [socket, dispatch]);
+    
     const { pathname } = useLocation()
     const getDetailUserById = async () => {
         const res = await UserService.getDetailUserById(params.id);
@@ -123,14 +127,20 @@ export default function ChatPage() {
     }
     useEffect(() => {
         const getMessages = async () => {
-            const res = await MessageService?.getMessage(currentChat?._id);
-            setMessages(res.response.data)
-        }
-        if (currentChat?._id) {
-            getMessages();
-        }
-    }, [currentChat])
-    const uiMessage = messageRealTime.length > 1 ? messageRealTime : messages;
+            if (currentChat?._id) {
+                const res = await MessageService.getMessage(currentChat?._id);
+                setMessages(res.response.data);  // Gán tin nhắn của cuộc trò chuyện hiện tại
+                setMessageRealTime([]);  // Reset tin nhắn real-time khi thay đổi cuộc trò chuyện
+            }
+        };
+        getMessages();
+    }, [currentChat]);
+    
+    
+    const uiMessage = [...messages, ...messageRealTime];
+
+
+    console.log("duydeptrai",uiMessage)
     const messageArray = uiMessage?.filter((item) => {
         // Lọc ra các tin nhắn mà người gửi không phải là user hiện tại
         return item?.senderId !== user?.id;

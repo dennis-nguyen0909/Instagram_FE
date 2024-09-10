@@ -48,6 +48,7 @@ export const Header = () => {
     const [notifications, setNotifications] = useState([])
     const [selectedFiles, setSelectedFiles] = useState([])
     const [video, setVideo] = useState('')
+    const [arrayNotice,setArrayNotice] = useState([])
     const dispatch = useDispatch()
 
     const handleToggleEmoji = () => {
@@ -475,6 +476,16 @@ export const Header = () => {
             <span>{`${sender}+ ${message}`}</span>
         )
     }
+    useEffect(() => {
+        socket.on('new-message', (mess) => {
+            setArrayNotice([...arrayNotice, mess])
+
+        });
+    
+        return () => {
+            socket.off('new-message'); // Cleanup để tránh đăng ký nhiều lần
+        };
+    }, [socket]);
     return (
         <WrapperContainer>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', paddingTop: '30px', paddingLeft: '10px' }}>
@@ -509,10 +520,10 @@ export const Header = () => {
                         )
                         : (
                             <>
-                                {/* <Badge style={{ fontSize: '10px', display: 'flex' }} count={messageRealTime} size='small'> */}
+                                <Badge style={{ fontSize: '10px', display: 'flex' }} count={arrayNotice.length} size='small'>
                                 < MessageOutlined />
                                 <p>Tin nhắn</p>
-                                {/* </Badge> */}
+                                </Badge>
                             </>
 
                         )}
